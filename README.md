@@ -20,33 +20,65 @@ The plugin jar is written to `build/libs/MobRarity-1.0.0-SNAPSHOT.jar`.
 
 Base command: `/mobrarity` with aliases `/mr` and `/mobr`.
 
-| Command | Permission | Description |
-| --- | --- | --- |
-| `/mobrarity reload` | `mobrarity.reload` | Reloads `tiers.yml` and `mobs.yml` without restarting the server. |
-| `/mobrarity validate` | `mobrarity.validate` | Parses `tiers.yml` and `mobs.yml` and reports whether they are valid without applying changes. |
-| `/mobrarity list tiers` | `mobrarity.list` | Lists configured global rarity tiers. |
-| `/mobrarity list variants` | `mobrarity.list` | Lists configured mob variant keys. |
-| `/mobrarity list mobs` | `mobrarity.list` | Lists mob types with MobRarity profiles. |
-| `/mobrarity inspect` | `mobrarity.inspect` | Inspects the living mob in the player's crosshair and reports its MobRarity data. |
-| `/mobrarity set &lt;tier&gt; &lt;variant&gt; [level]` | `mobrarity.set` | Assigns configured MobRarity data to the targeted living mob. |
-| `/mobrarity clear` | `mobrarity.clear` | Removes MobRarity data from the targeted living mob. |
-| `/mobrarity spawn &lt;entity&gt; &lt;tier&gt; &lt;variant&gt; [level] [player]` | `mobrarity.spawn` | Spawns and tags a configured mob on the sender or named online player. |
+- `/mobrarity reload`
+  Permission: `mobrarity.reload`
+  Reloads `tiers.yml` and `mobs.yml` without restarting the server.
+- `/mobrarity validate`
+  Permission: `mobrarity.validate`
+  Parses `tiers.yml` and `mobs.yml` and reports whether they are valid without applying changes.
+- `/mobrarity list tiers`
+  Permission: `mobrarity.list`
+  Lists configured global rarity tiers.
+- `/mobrarity list variants`
+  Permission: `mobrarity.list`
+  Lists configured mob variant keys.
+- `/mobrarity list mobs`
+  Permission: `mobrarity.list`
+  Lists mob types with MobRarity profiles.
+- `/mobrarity inspect`
+  Permission: `mobrarity.inspect`
+  Inspects the living mob in the player's crosshair and reports its MobRarity data.
+- `/mobrarity set <tier> <variant> [level]`
+  Permission: `mobrarity.set`
+  Assigns configured MobRarity data to the targeted living mob.
+- `/mobrarity clear`
+  Permission: `mobrarity.clear`
+  Removes MobRarity data from the targeted living mob.
+- `/mobrarity spawn <entity> <tier> <variant> [level] [player]`
+  Permission: `mobrarity.spawn`
+  Spawns and tags a configured mob on the sender or named online player.
 
 `mobrarity.admin` grants all admin command permissions and the claim-check bypass permission.
 
 ## Permission Reference
 
-| Permission | Default | Description |
-| --- | --- | --- |
-| `mobrarity.admin` | `op` | Parent permission for every MobRarity admin command and bypass permission. |
-| `mobrarity.reload` | `op` | Allows `/mobrarity reload`. |
-| `mobrarity.validate` | `op` | Allows `/mobrarity validate`. |
-| `mobrarity.list` | `op` | Allows `/mobrarity list tiers`, `/mobrarity list variants`, and `/mobrarity list mobs`. |
-| `mobrarity.inspect` | `op` | Allows `/mobrarity inspect`. |
-| `mobrarity.set` | `op` | Allows `/mobrarity set`. |
-| `mobrarity.clear` | `op` | Allows `/mobrarity clear`. |
-| `mobrarity.spawn` | `op` | Allows `/mobrarity spawn`. |
-| `mobrarity.bypass.claim-check` | `op` | Allows MobRarity effects to run for the player even when a claim protection check would normally deny them. |
+- `mobrarity.admin`
+  Default: `op`
+  Parent permission for every MobRarity admin command and bypass permission.
+- `mobrarity.reload`
+  Default: `op`
+  Allows `/mobrarity reload`.
+- `mobrarity.validate`
+  Default: `op`
+  Allows `/mobrarity validate`.
+- `mobrarity.list`
+  Default: `op`
+  Allows `/mobrarity list tiers`, `/mobrarity list variants`, and `/mobrarity list mobs`.
+- `mobrarity.inspect`
+  Default: `op`
+  Allows `/mobrarity inspect`.
+- `mobrarity.set`
+  Default: `op`
+  Allows `/mobrarity set`.
+- `mobrarity.clear`
+  Default: `op`
+  Allows `/mobrarity clear`.
+- `mobrarity.spawn`
+  Default: `op`
+  Allows `/mobrarity spawn`.
+- `mobrarity.bypass.claim-check`
+  Default: `op`
+  Allows MobRarity effects to run for the player even when a claim protection check would normally deny them.
 
 ## Effect Actions
 
