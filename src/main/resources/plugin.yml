@@ -1,0 +1,38 @@
+name: MobRarity
+version: '${version}'
+main: com.nick.mobrarity.RarityMobPlugin
+api-version: '26.1.2'
+author: Nick
+description: Configurable mob rarities, variants, effects, and levels.
+softdepend:
+  - LandClaims
+  - VaultUnlocked
+  - PlaceholderAPI
+commands:
+  mobrarity:
+    description: Admin commands for MobRarity.
+    usage: /mobrarity
+    aliases: [mr, mobr]
+permissions:
+  mobrarity.admin:
+    description: Grants all MobRarity admin permissions.
+    default: op
+    children:
+      mobrarity.reload: true
+      mobrarity.inspect: true
+      mobrarity.set: true
+      mobrarity.spawn: true
+      mobrarity.clear: true
+      mobrarity.bypass.claim-check: true
+  mobrarity.reload:
+    default: op
+  mobrarity.inspect:
+    default: op
+  mobrarity.set:
+    default: op
+  mobrarity.spawn:
+    default: op
+  mobrarity.clear:
+    default: op
+  mobrarity.bypass.claim-check:
+    default: op

@@ -1,0 +1,36 @@
+# MobRarity main settings.
+# This file controls integrations, display behavior, leveling, and safety defaults.
+
+integrations:
+  landclaims:
+    # allow: run effects even when LandClaims is missing.
+    # deny-protected-effects: block claim-gated gameplay effects, allow visuals.
+    # deny-all-effects: block all non-admin rarity triggers until LandClaims is available.
+    missing-service-policy: allow
+  vaultunlocked:
+    enabled: true
+  placeholderapi:
+    enabled: true
+
+display:
+  # disabled, always, within-distance, or targeted.
+  nametag-mode: targeted
+  title-mode: targeted
+  visibility-distance: 18.0
+  target-distance: 32.0
+
+leveling:
+  enabled: true
+  worlds:
+    world:
+      # world-spawn uses the world's current spawn location.
+      # blocks-per-level controls how quickly rarity levels increase with distance.
+      origin: world-spawn
+      blocks-per-level: 250
+      min-level: 1
+      max-level: 100
+      depth-bonus:
+        enabled: true
+        starts-below-y: 64
+        levels-per-y: 0.15
+        max-bonus-levels: 25

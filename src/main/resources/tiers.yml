@@ -1,0 +1,27 @@
+# Global rarity tiers.
+# Tiers define shared display, base spawn weights, scaling, and effects.
+
+# The key under tiers is the internal tier id used by mob variants.
+# Higher weights are more common when the plugin rolls a rarity.
+# MiniMessage is supported in display text.
+# Placeholder values such as %mobrarity_level% are replaced before MiniMessage rendering.
+# Keep particle intervals reasonable; very low values can affect server performance.
+# Later tiers can add trigger sections such as on_spawn or on_death.
+# Per-mob variants in mobs.yml can override or extend these defaults.
+tiers:
+  common:
+    weight: 100
+    display-name: "<gray>Common</gray>"
+  rare:
+    weight: 8
+    display-name: "<aqua>Rare</aqua>"
+    rarity-weight-modifier:
+      per-level: 0.03
+    display:
+      nametag: "<aqua>[Lv %mobrarity_level%] %mobrarity_variant%</aqua>"
+    visuals:
+      particles:
+        enabled: true
+        particle: HAPPY_VILLAGER
+        interval-ticks: 40
+        count: 3
