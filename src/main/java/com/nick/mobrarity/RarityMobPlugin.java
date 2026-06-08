@@ -76,7 +76,7 @@ public final class RarityMobPlugin extends JavaPlugin {
                 new MobSpawnListener(() -> runtimeConfig.get().mobProfiles(), spawnRarityService, mobLevelService, mobTagService),
                 this);
         getServer().getPluginManager().registerEvents(
-                new MobDamageListener(playerDamageTracker, Bukkit::getCurrentTick),
+                new MobDamageListener(playerDamageTracker, Bukkit::getCurrentTick, effectEngine, triggerService::trigger),
                 this);
         getServer().getPluginManager().registerEvents(
                 new MobDeathListener(playerDamageTracker, effectEngine, entity -> triggerService.trigger(entity, "on_death"), Bukkit::getCurrentTick),

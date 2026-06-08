@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityBreedEvent;
@@ -33,20 +34,37 @@ public final class MobActivityListener implements Listener {
         if (!(target instanceof LivingEntity livingEntity) || effectEngine == null) {
             return;
         }
-        triggerLookup.trigger(livingEntity, "on_shear")
-                .ifPresent(trigger -> effectEngine.run(trigger, TriggerContext.forEntity(livingEntity, event.getPlayer())));
+        runTrigger(livingEntity, event.getPlayer(), "on_shear");
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityTame(EntityTameEvent event) {
+        if (effectEngine == null || !(event.getOwner() instanceof Player player)) {
+            return;
+        }
+        runTrigger(event.getEntity(), player, "on_tame");
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityBreed(EntityBreedEvent event) {
+        if (effectEngine == null || !(event.getBreeder() instanceof Player player)) {
+            return;
+        }
+        runTrigger(event.getEntity(), player, "on_breed");
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+        Entity target = event.getRightClicked();
+        if (!(target instanceof LivingEntity livingEntity) || effectEngine == null) {
+            return;
+        }
+        runTrigger(livingEntity, event.getPlayer(), "on_interact");
+    }
+
+    private void runTrigger(LivingEntity entity, Player player, String triggerKey) {
+        triggerLookup.trigger(entity, triggerKey)
+                .ifPresent(trigger -> effectEngine.run(trigger, TriggerContext.forEntity(entity, player)));
     }
 
     @FunctionalInterface

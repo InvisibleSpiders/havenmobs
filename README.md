@@ -46,5 +46,6 @@ Configured triggers currently support:
 - `potion_effect` with `effect`, `duration-ticks`, `amplifier`, and optional `target: player|mob`.
 - `currency_drop` with `amount`, paid through VaultUnlocked/Vault economy when available.
 - `command` with `command` and optional `as: console|player`; `%player%` and `%entity_type%` placeholders are replaced.
+- `hostile_target`, which makes a Bukkit `Mob` target the triggering player when the entity supports targeting.
 
-`on_shear`, `on_aura_tick`, and player-caused `on_death` triggers are wired now. Tame, breed, and interact triggers are planned next.
+`on_shear`, `on_aura_tick`, `on_damage`, `on_tame`, `on_breed`, `on_interact`, and player-caused `on_death` triggers are wired now.

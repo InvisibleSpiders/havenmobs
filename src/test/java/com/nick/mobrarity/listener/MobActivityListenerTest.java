@@ -17,6 +17,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.entity.EntityBreedEvent;
+import org.bukkit.event.entity.EntityTameEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 import org.junit.jupiter.api.Test;
 
@@ -65,5 +68,68 @@ final class MobActivityListenerTest {
         listener.onPlayerShearEntity(event);
 
         assertThat(executed).isEmpty();
+    }
+
+    @Test
+    void runsInteractTriggerWithPlayerAndEntityContext() {
+        Player player = mock(Player.class);
+        LivingEntity entity = mock(LivingEntity.class);
+        PlayerInteractEntityEvent event = mock(PlayerInteractEntityEvent.class);
+        when(event.getPlayer()).thenReturn(player);
+        when(event.getRightClicked()).thenReturn(entity);
+        List<TriggerContext> contexts = new ArrayList<>();
+        MobActivityListener listener = listenerFor("on_interact", contexts);
+
+        listener.onPlayerInteractEntity(event);
+
+        assertThat(contexts).hasSize(1);
+        assertThat(contexts.getFirst().entity()).contains(entity);
+        assertThat(contexts.getFirst().player()).contains(player);
+    }
+
+    @Test
+    void runsTameTriggerWhenOwnerIsPlayer() {
+        Player player = mock(Player.class);
+        LivingEntity entity = mock(LivingEntity.class);
+        EntityTameEvent event = mock(EntityTameEvent.class);
+        when(event.getOwner()).thenReturn(player);
+        when(event.getEntity()).thenReturn(entity);
+        List<TriggerContext> contexts = new ArrayList<>();
+        MobActivityListener listener = listenerFor("on_tame", contexts);
+
+        listener.onEntityTame(event);
+
+        assertThat(contexts).hasSize(1);
+        assertThat(contexts.getFirst().entity()).contains(entity);
+        assertThat(contexts.getFirst().player()).contains(player);
+    }
+
+    @Test
+    void runsBreedTriggerWhenBreederIsPlayer() {
+        Player player = mock(Player.class);
+        LivingEntity child = mock(LivingEntity.class);
+        EntityBreedEvent event = mock(EntityBreedEvent.class);
+        when(event.getBreeder()).thenReturn(player);
+        when(event.getEntity()).thenReturn(child);
+        List<TriggerContext> contexts = new ArrayList<>();
+        MobActivityListener listener = listenerFor("on_breed", contexts);
+
+        listener.onEntityBreed(event);
+
+        assertThat(contexts).hasSize(1);
+        assertThat(contexts.getFirst().entity()).contains(child);
+        assertThat(contexts.getFirst().player()).contains(player);
+    }
+
+    private static MobActivityListener listenerFor(String expectedTrigger, List<TriggerContext> contexts) {
+        EffectEngine effectEngine = new EffectEngine(
+                type -> Optional.of((action, context) -> contexts.add(context)),
+                () -> 0.0);
+        return new MobActivityListener(
+                effectEngine,
+                (target, triggerKey) -> expectedTrigger.equals(triggerKey)
+                        ? Optional.of(new TriggerDefinition(expectedTrigger, 1.0, 0, 0,
+                                List.of(new ActionDefinition("command", Map.of()))))
+                        : Optional.empty());
     }
 }
