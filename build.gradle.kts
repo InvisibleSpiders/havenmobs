@@ -27,9 +27,11 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.18.0")
     testCompileOnly("io.papermc.paper:paper-api:26.1.2.build.69-stable")
     testCompileOnly("net.milkbowl.vault:VaultAPI:1.7")
+    testCompileOnly("me.clip:placeholderapi:2.11.6")
     testCompileOnly(files("libs/landclaims-api.jar"))
     testRuntimeOnly("io.papermc.paper:paper-api:26.1.2.build.69-stable")
     testRuntimeOnly("net.milkbowl.vault:VaultAPI:1.7")
+    testRuntimeOnly("me.clip:placeholderapi:2.11.6")
     testRuntimeOnly(files("libs/landclaims-api.jar"))
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
