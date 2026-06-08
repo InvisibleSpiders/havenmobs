@@ -26,17 +26,31 @@ Use `-PaperVersion <version>` to pin a Paper version, `-ServerDir <path>` to cho
 - Java 25.
 - Optional: LandClaims, VaultUnlocked, PlaceholderAPI.
 
-## Admin Commands
+## Commands And Permissions
 
 Base command: `/mobrarity` with aliases `/mr` and `/mobr`.
 
-- `/mobrarity reload` reloads `tiers.yml` and `mobs.yml` without restarting the server.
-- `/mobrarity inspect` inspects the living mob in the player's crosshair.
-- `/mobrarity set <tier> <variant> [level]` assigns configured MobRarity data to the targeted living mob.
-- `/mobrarity clear` removes MobRarity data from the targeted living mob.
-- `/mobrarity spawn <entity> <tier> <variant> [level] [player]` spawns and tags a configured mob on the sender or named online player.
+| Command | Permission | Description |
+| --- | --- | --- |
+| `/mobrarity reload` | `mobrarity.reload` | Reloads `tiers.yml` and `mobs.yml` without restarting the server. |
+| `/mobrarity inspect` | `mobrarity.inspect` | Inspects the living mob in the player's crosshair and reports its MobRarity data. |
+| `/mobrarity set <tier> <variant> [level]` | `mobrarity.set` | Assigns configured MobRarity data to the targeted living mob. |
+| `/mobrarity clear` | `mobrarity.clear` | Removes MobRarity data from the targeted living mob. |
+| `/mobrarity spawn <entity> <tier> <variant> [level] [player]` | `mobrarity.spawn` | Spawns and tags a configured mob on the sender or named online player. |
 
-All admin commands have per-action permissions under `mobrarity.<action>`, with `mobrarity.admin` granting the full set.
+`mobrarity.admin` grants all admin command permissions and the claim-check bypass permission.
+
+## Permission Reference
+
+| Permission | Default | Description |
+| --- | --- | --- |
+| `mobrarity.admin` | `op` | Parent permission for every MobRarity admin command and bypass permission. |
+| `mobrarity.reload` | `op` | Allows `/mobrarity reload`. |
+| `mobrarity.inspect` | `op` | Allows `/mobrarity inspect`. |
+| `mobrarity.set` | `op` | Allows `/mobrarity set`. |
+| `mobrarity.clear` | `op` | Allows `/mobrarity clear`. |
+| `mobrarity.spawn` | `op` | Allows `/mobrarity spawn`. |
+| `mobrarity.bypass.claim-check` | `op` | Allows MobRarity effects to run for the player even when a claim protection check would normally deny them. |
 
 ## Effect Actions
 
@@ -49,3 +63,12 @@ Configured triggers currently support:
 - `hostile_target`, which makes a Bukkit `Mob` target the triggering player when the entity supports targeting.
 
 `on_shear`, `on_aura_tick`, `on_damage`, `on_tame`, `on_breed`, `on_interact`, and player-caused `on_death` triggers are wired now.
+
+## Claim Protection
+
+When LandClaims is installed and exposes `LandClaimsApi`, MobRarity checks claim access before effect actions run.
+
+- Any action can set `claim-action` in `mobs.yml` to choose the LandClaims action or flag key checked before the effect runs.
+- `hostile_target` defaults to `mob_griefing`.
+- Other actions default to their action type, such as `item_drop`, `currency_drop`, or `potion_effect`.
+- If LandClaims is not installed, the current fallback policy allows effects to run.
