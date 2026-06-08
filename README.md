@@ -10,6 +10,16 @@ MobRarity is a Paper plugin foundation for configurable mob rarities, named vari
 
 The plugin jar is written to `build/libs/MobRarity-1.0.0-SNAPSHOT.jar`.
 
+## Smoke Test Server
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-smoke-server.ps1
+```
+
+The script builds the plugin, downloads the latest Paper server jar from PaperMC, creates `.smoke-server`, installs `plugins/MobRarity.jar`, accepts the local test EULA, and starts the server with `nogui`.
+
+Use `-PaperVersion <version>` to pin a Paper version, `-ServerDir <path>` to choose another test server folder, or `-SkipBuild` after a successful local build.
+
 ## Runtime
 
 - Paper 26.1+.
