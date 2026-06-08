@@ -20,14 +20,17 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:26.1.2.build.69-stable")
     compileOnly("net.milkbowl.vault:VaultAPI:1.7")
     compileOnly("me.clip:placeholderapi:2.11.6")
+    compileOnly(files("libs/landclaims-api.jar"))
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
     testImplementation("org.assertj:assertj-core:3.27.3")
     testImplementation("org.mockito:mockito-core:5.18.0")
     testCompileOnly("io.papermc.paper:paper-api:26.1.2.build.69-stable")
     testCompileOnly("net.milkbowl.vault:VaultAPI:1.7")
+    testCompileOnly(files("libs/landclaims-api.jar"))
     testRuntimeOnly("io.papermc.paper:paper-api:26.1.2.build.69-stable")
     testRuntimeOnly("net.milkbowl.vault:VaultAPI:1.7")
+    testRuntimeOnly(files("libs/landclaims-api.jar"))
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

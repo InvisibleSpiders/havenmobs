@@ -4,6 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.nick.landclaims.api.LandClaimsApi;
+import com.nick.landclaims.api.claim.ClaimView;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
@@ -58,7 +63,7 @@ final class LandClaimsProtectionAdapterTest {
     }
 
     @Test
-    void reflectionFailureFallsBackWithoutThrowing() {
+    void apiFailureFallsBackWithoutThrowing() {
         ThrowingLandClaimsApi api = new ThrowingLandClaimsApi();
         LandClaimsProtectionAdapter adapter =
                 new LandClaimsProtectionAdapter(api, ProtectionFallbackPolicy.DENY_PROTECTED_EFFECTS);
@@ -70,7 +75,29 @@ final class LandClaimsProtectionAdapterTest {
         assertThat(api.calls()).isEqualTo(2);
     }
 
-    public static final class FakeLandClaimsApi {
+    private abstract static class TestLandClaimsApi implements LandClaimsApi {
+        @Override
+        public Optional<ClaimView> getClaimAt(Location location) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<ClaimView> getClaimById(UUID claimId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<ClaimView> getClaimsOwnedBy(UUID playerId) {
+            return List.of();
+        }
+
+        @Override
+        public boolean canBuild(Player player, Location location) {
+            return false;
+        }
+    }
+
+    public static final class FakeLandClaimsApi extends TestLandClaimsApi {
         private final boolean result;
         private int calls;
 
@@ -88,9 +115,10 @@ final class LandClaimsProtectionAdapterTest {
         }
     }
 
-    public static final class ThrowingLandClaimsApi {
+    public static final class ThrowingLandClaimsApi extends TestLandClaimsApi {
         private int calls;
 
+        @Override
         public boolean canInteract(Player player, Location location, String actionKey) {
             calls++;
             throw new IllegalStateException("reflection target failed");

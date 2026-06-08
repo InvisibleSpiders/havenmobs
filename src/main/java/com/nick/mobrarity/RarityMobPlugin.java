@@ -9,12 +9,13 @@ import com.nick.mobrarity.effect.AuraTickService;
 import com.nick.mobrarity.effect.BukkitEntityScanner;
 import com.nick.mobrarity.effect.BukkitEffectActionRegistry;
 import com.nick.mobrarity.effect.EffectEngine;
+import com.nick.mobrarity.effect.ProtectedEffectActionRegistry;
 import com.nick.mobrarity.effect.RarityTriggerService;
 import com.nick.mobrarity.config.ConfigService;
 import com.nick.mobrarity.config.ConfigSnapshot;
 import com.nick.mobrarity.config.ConfigValidationException;
 import com.nick.mobrarity.integration.EconomyAdapter;
-import com.nick.mobrarity.integration.LandClaimsProtectionAdapter;
+import com.nick.mobrarity.integration.LandClaimsProtectionFactory;
 import com.nick.mobrarity.integration.NoEconomyAdapter;
 import com.nick.mobrarity.integration.ProtectionAdapter;
 import com.nick.mobrarity.integration.ProtectionFallbackPolicy;
@@ -58,11 +59,13 @@ public final class RarityMobPlugin extends JavaPlugin {
         MobTagService mobTagService = new MobTagService(this);
         PlayerDamageTracker playerDamageTracker = new PlayerDamageTracker(20L * 30L);
         EconomyAdapter economyAdapter = loadEconomyAdapter();
+        ProtectionAdapter protectionAdapter = loadProtectionAdapter();
         EffectEngine effectEngine = new EffectEngine(
-                new BukkitEffectActionRegistry(economyAdapter, RandomGenerator.getDefault()),
+                new ProtectedEffectActionRegistry(
+                        new BukkitEffectActionRegistry(economyAdapter, RandomGenerator.getDefault()),
+                        protectionAdapter),
                 Math::random);
         RarityTriggerService triggerService = new RarityTriggerService(runtimeConfig::get, mobTagService);
-        ProtectionAdapter protectionAdapter = new LandClaimsProtectionAdapter(null, ProtectionFallbackPolicy.ALLOW);
         BukkitEntityScanner entityScanner = new BukkitEntityScanner();
         AuraTickService auraTickService = new AuraTickService(
                 entityScanner::livingEntities,
@@ -139,5 +142,15 @@ public final class RarityMobPlugin extends JavaPlugin {
             return new NoEconomyAdapter();
         }
         return new VaultUnlockedEconomyAdapter(registration.getProvider());
+    }
+
+    private ProtectionAdapter loadProtectionAdapter() {
+        ProtectionFallbackPolicy fallbackPolicy = ProtectionFallbackPolicy.ALLOW;
+        try {
+            Class.forName("com.nick.landclaims.api.LandClaimsApi", false, getClass().getClassLoader());
+            return LandClaimsProtectionFactory.load(this, fallbackPolicy);
+        } catch (ClassNotFoundException | NoClassDefFoundError exception) {
+            return (player, location, actionKey, actionType) -> fallbackPolicy.allowsMissingService(actionType);
+        }
     }
 }
