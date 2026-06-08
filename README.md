@@ -50,9 +50,13 @@ Base command: `/mobrarity` with aliases `/mr` and `/mobr`.
 Configured triggers currently support:
 
 - `item_drop` with `material` and numeric or ranged `amount`, such as `2-8`.
-- `potion_effect` with `effect`, `duration-ticks`, `amplifier`, and optional `target: player|mob`.
-- `currency_drop` with `amount`, paid through VaultUnlocked/Vault economy when available.
-- `command` with `command` and optional `as: console|player`.
+- `potion_effect` with `effect`, `duration-ticks`, `amplifier`, and optional `target`.
+- `currency_drop` with `amount`, paid through VaultUnlocked or Vault.
+- `console_command`, `player_command`, and `op_player_command` with `command`.
+- `xp_drop` with `amount`.
+- `heal` and `damage` with `amount` and optional `target`.
+- `knockback` with `strength`, optional `y`, and optional `target`.
+- `lightning_effect`, which shows lightning without dealing lightning damage.
 - `hostile_target`, which makes a Bukkit `Mob` target the triggering player.
 
 Supported triggers include `on_shear`, `on_aura_tick`, `on_damage`, `on_tame`,

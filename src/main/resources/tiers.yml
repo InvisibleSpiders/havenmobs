@@ -37,6 +37,5 @@ tiers:
         actions:
           - type: currency_drop
             amount: 5.0
-          - type: command
-            as: console
+          - type: console_command
             command: "say %player% defeated a rare %entity_type%"
