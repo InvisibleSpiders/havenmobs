@@ -94,6 +94,7 @@ public final class RarityMobPlugin extends JavaPlugin {
             mobRarityCommand.setExecutor(new MobRarityCommand(
                     adminService,
                     () -> reloadRuntimeConfig(dataFolder, runtimeConfig),
+                    () -> validateRuntimeConfig(dataFolder),
                     name -> Optional.ofNullable(Bukkit.getPlayerExact(name)),
                     this::onlinePlayerNames));
             mobRarityCommand.setTabCompleter(new MobRarityTabCompleter(
@@ -126,6 +127,21 @@ public final class RarityMobPlugin extends JavaPlugin {
             return AdminCommandResult.success("Reloaded MobRarity config.");
         } catch (ConfigValidationException exception) {
             return AdminCommandResult.failure("MobRarity config reload failed: " + exception.getMessage());
+        }
+    }
+
+    private AdminCommandResult validateRuntimeConfig(Path dataFolder) {
+        try {
+            ConfigSnapshot snapshot = loadRuntimeConfig(dataFolder);
+            long variantCount = snapshot.mobProfiles().values().stream()
+                    .mapToLong(profile -> profile.variants().size())
+                    .sum();
+            return AdminCommandResult.success("MobRarity config is valid: %d tiers, %d mobs, %d variants.".formatted(
+                    snapshot.tiers().size(),
+                    snapshot.mobProfiles().size(),
+                    variantCount));
+        } catch (ConfigValidationException exception) {
+            return AdminCommandResult.failure("MobRarity config validation failed: " + exception.getMessage());
         }
     }
 

@@ -117,6 +117,25 @@ final class MobRarityAdminServiceTest {
                 .containsEntry("variants", List.of("rare_sheep"));
     }
 
+    @Test
+    void listReportsConfiguredTiersVariantsAndMobs() {
+        MobRarityAdminService service = service(mock(MobTagService.class), Optional.empty(), config());
+
+        assertThat(service.list("tiers").message()).isEqualTo("Tiers: rare");
+        assertThat(service.list("variants").message()).isEqualTo("Variants: rare_sheep");
+        assertThat(service.list("mobs").message()).isEqualTo("Mobs: SHEEP");
+    }
+
+    @Test
+    void listRejectsUnknownCategoriesWithUsage() {
+        MobRarityAdminService service = service(mock(MobTagService.class), Optional.empty(), config());
+
+        AdminCommandResult result = service.list("loot");
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).isEqualTo("Unknown list category 'loot'. Use tiers, variants, or mobs.");
+    }
+
     private static MobRarityAdminService service(
             MobTagService tagService,
             Optional<LivingEntity> target,

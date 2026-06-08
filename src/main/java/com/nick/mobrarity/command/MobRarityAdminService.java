@@ -101,12 +101,26 @@ public final class MobRarityAdminService implements MobRarityCommand.AdminServic
         ConfigSnapshot snapshot = configSupplier.get();
         TreeSet<String> tiers = new TreeSet<>(snapshot.tiers().keySet());
         TreeSet<String> variants = new TreeSet<>();
+        TreeSet<String> mobs = new TreeSet<>();
+        snapshot.mobProfiles().keySet().forEach(entityType -> mobs.add(entityType.name()));
         for (MobProfile profile : snapshot.mobProfiles().values()) {
             variants.addAll(profile.variants().keySet());
         }
         return Map.of(
                 "tiers", new ArrayList<>(tiers),
-                "variants", new ArrayList<>(variants));
+                "variants", new ArrayList<>(variants),
+                "mobs", new ArrayList<>(mobs));
+    }
+
+    @Override
+    public AdminCommandResult list(String category) {
+        return switch (category.toLowerCase(java.util.Locale.ROOT)) {
+            case "tiers" -> AdminCommandResult.success("Tiers: " + joined(completions().get("tiers")));
+            case "variants" -> AdminCommandResult.success("Variants: " + joined(completions().get("variants")));
+            case "mobs" -> AdminCommandResult.success("Mobs: " + joined(completions().get("mobs")));
+            default -> AdminCommandResult.failure(
+                    "Unknown list category '%s'. Use tiers, variants, or mobs.".formatted(category));
+        };
     }
 
     private java.util.Optional<MobRarityData> tagEntity(
@@ -144,5 +158,12 @@ public final class MobRarityAdminService implements MobRarityCommand.AdminServic
     private static AdminCommandResult invalidVariant(EntityType entityType, String tierKey, String variantKey) {
         return AdminCommandResult.failure(
                 "Variant '%s' is not configured for %s.".formatted(variantKey, entityType.name()));
+    }
+
+    private static String joined(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return "(none)";
+        }
+        return String.join(", ", values);
     }
 }

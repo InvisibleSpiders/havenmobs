@@ -12,7 +12,8 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.EntityType;
 
 public final class MobRarityTabCompleter implements TabCompleter {
-    private static final List<String> BASE_SUBCOMMANDS = List.of("reload", "inspect", "set", "spawn", "clear");
+    private static final List<String> BASE_SUBCOMMANDS = List.of("reload", "validate", "list", "inspect", "set", "spawn", "clear");
+    private static final List<String> LIST_CATEGORIES = List.of("tiers", "variants", "mobs");
     private final Supplier<Map<String, List<String>>> completionSupplier;
     private final Supplier<List<String>> playerNameSupplier;
 
@@ -35,10 +36,15 @@ public final class MobRarityTabCompleter implements TabCompleter {
 
         String subcommand = args[0] == null ? "" : args[0].toLowerCase(Locale.ROOT);
         return switch (subcommand) {
+            case "list" -> completeList(args);
             case "set" -> completeSet(args);
             case "spawn" -> completeSpawn(args);
             default -> List.of();
         };
+    }
+
+    private List<String> completeList(String[] args) {
+        return args.length == 2 ? filter(LIST_CATEGORIES, prefix(args, 1)) : List.of();
     }
 
     private List<String> completeSet(String[] args) {

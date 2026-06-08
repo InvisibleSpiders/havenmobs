@@ -24,7 +24,7 @@ final class MobRarityCommandTest {
         boolean handled = command.onCommand(sender, mock(Command.class), "mobrarity", new String[0]);
 
         assertThat(handled).isTrue();
-        verify(sender).sendMessage("/mobrarity reload|inspect|set|spawn|clear");
+        verify(sender).sendMessage("/mobrarity reload|validate|list|inspect|set|spawn|clear");
     }
 
     @Test
@@ -35,6 +35,7 @@ final class MobRarityCommandTest {
         MobRarityCommand command = new MobRarityCommand(
                 StubAdminService.empty(),
                 reload,
+                () -> AdminCommandResult.success("MobRarity config is valid."),
                 name -> Optional.empty(),
                 () -> List.of());
 
@@ -53,6 +54,7 @@ final class MobRarityCommandTest {
         MobRarityCommand command = new MobRarityCommand(
                 adminService,
                 () -> AdminCommandResult.success("Reloaded MobRarity config."),
+                () -> AdminCommandResult.success("MobRarity config is valid."),
                 name -> Optional.empty(),
                 () -> List.of());
 
@@ -71,6 +73,7 @@ final class MobRarityCommandTest {
         MobRarityCommand command = new MobRarityCommand(
                 adminService,
                 () -> AdminCommandResult.success("Reloaded MobRarity config."),
+                () -> AdminCommandResult.success("MobRarity config is valid."),
                 name -> Optional.empty(),
                 () -> List.of());
 
@@ -97,6 +100,7 @@ final class MobRarityCommandTest {
         MobRarityCommand command = new MobRarityCommand(
                 adminService,
                 () -> AdminCommandResult.success("Reloaded MobRarity config."),
+                () -> AdminCommandResult.success("MobRarity config is valid."),
                 name -> "Alex".equals(name) ? Optional.of(target) : Optional.empty(),
                 () -> List.of("Alex"));
 
@@ -124,6 +128,7 @@ final class MobRarityCommandTest {
         MobRarityCommand command = new MobRarityCommand(
                 adminService,
                 () -> AdminCommandResult.success("Reloaded MobRarity config."),
+                () -> AdminCommandResult.success("MobRarity config is valid."),
                 name -> Optional.empty(),
                 () -> List.of());
 
@@ -141,6 +146,7 @@ final class MobRarityCommandTest {
         MobRarityCommand command = new MobRarityCommand(
                 adminService,
                 () -> AdminCommandResult.success("Reloaded MobRarity config."),
+                () -> AdminCommandResult.success("MobRarity config is valid."),
                 name -> Optional.empty(),
                 () -> List.of());
 
@@ -155,6 +161,46 @@ final class MobRarityCommandTest {
         verify(player).sendMessage("Level must be a positive whole number.");
     }
 
+    @Test
+    void validateRequiresPermissionAndRunsValidationAction() {
+        CommandSender sender = mock(CommandSender.class);
+        when(sender.hasPermission("mobrarity.validate")).thenReturn(true);
+        MobRarityCommand.AdminAction validate = mock(MobRarityCommand.AdminAction.class);
+        when(validate.run()).thenReturn(AdminCommandResult.success("MobRarity config is valid."));
+        MobRarityCommand command = new MobRarityCommand(
+                StubAdminService.empty(),
+                () -> AdminCommandResult.success("Reloaded MobRarity config."),
+                validate,
+                name -> Optional.empty(),
+                () -> List.of());
+
+        boolean handled = command.onCommand(sender, mock(Command.class), "mobrarity", new String[] {"validate"});
+
+        assertThat(handled).isTrue();
+        verify(validate).run();
+        verify(sender).sendMessage("MobRarity config is valid.");
+    }
+
+    @Test
+    void listRoutesCategoryToAdminService() {
+        CommandSender sender = mock(CommandSender.class);
+        when(sender.hasPermission("mobrarity.list")).thenReturn(true);
+        StubAdminService adminService = StubAdminService.empty();
+        adminService.listResult = AdminCommandResult.success("Tiers: common, rare");
+        MobRarityCommand command = new MobRarityCommand(
+                adminService,
+                () -> AdminCommandResult.success("Reloaded MobRarity config."),
+                () -> AdminCommandResult.success("MobRarity config is valid."),
+                name -> Optional.empty(),
+                () -> List.of());
+
+        boolean handled = command.onCommand(sender, mock(Command.class), "mobrarity", new String[] {"list", "tiers"});
+
+        assertThat(handled).isTrue();
+        assertThat(adminService.listCategory).isEqualTo("tiers");
+        verify(sender).sendMessage("Tiers: common, rare");
+    }
+
     private static Player permittedPlayer(String permission) {
         Player player = mock(Player.class);
         when(player.hasPermission(permission)).thenReturn(true);
@@ -166,12 +212,14 @@ final class MobRarityCommandTest {
         private AdminCommandResult setResult = AdminCommandResult.failure("No targeted living mob found.");
         private AdminCommandResult clearResult = AdminCommandResult.failure("No targeted living mob found.");
         private AdminCommandResult spawnResult = AdminCommandResult.failure("Unable to spawn entity.");
+        private AdminCommandResult listResult = AdminCommandResult.failure("Unknown list category.");
         private Player inspectPlayer;
         private Player setPlayer;
         private String setTier;
         private String setVariant;
         private int setLevel;
         private Player clearPlayer;
+        private String listCategory;
         private CommandSender spawnSender;
         private Player spawnTarget;
         private EntityType spawnEntityType;
@@ -219,6 +267,12 @@ final class MobRarityCommandTest {
             spawnVariant = variantKey;
             spawnLevel = level;
             return spawnResult;
+        }
+
+        @Override
+        public AdminCommandResult list(String category) {
+            listCategory = category;
+            return listResult;
         }
 
         @Override
