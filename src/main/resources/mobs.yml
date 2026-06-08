@@ -20,7 +20,11 @@
 # - item_drop: material + amount, where amount can be a number or "min-max".
 # - potion_effect: effect + duration-ticks + amplifier, target defaults to the player.
 # - currency_drop: amount deposited through VaultUnlocked/Vault economy when available.
-# - command: command text, optional as: console|player, supports %player% and %entity_type%.
+# - console_command, player_command, op_player_command: command text with placeholders.
+# - xp_drop: amount of experience to drop at the mob.
+# - heal or damage: amount, target defaults to player and can be mob.
+# - knockback: strength, optional y, target defaults to player and can be mob.
+# - lightning_effect: visual lightning at the mob without lightning damage.
 # - hostile_target: makes a Mob target the triggering player when the entity supports targeting.
 # Any action can set claim-action to choose the LandClaims flag checked before it runs.
 # By default, hostile_target checks mob_griefing and other actions check their action type.

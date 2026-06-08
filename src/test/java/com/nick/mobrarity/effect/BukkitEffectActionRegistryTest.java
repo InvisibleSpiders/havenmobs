@@ -15,6 +15,7 @@ import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 import org.junit.jupiter.api.Test;
 
 final class BukkitEffectActionRegistryTest {
@@ -100,7 +101,7 @@ final class BukkitEffectActionRegistryTest {
     }
 
     @Test
-    void commandActionDispatchesConsoleCommandWithPlaceholders() {
+    void consoleCommandDispatchesConsoleCommandWithPlaceholders() {
         Player player = mock(Player.class);
         when(player.getName()).thenReturn("Alex");
         LivingEntity entity = mock(LivingEntity.class);
@@ -113,11 +114,126 @@ final class BukkitEffectActionRegistryTest {
                 new RecordingItemDropper(),
                 new RecordingPotionApplier());
 
-        registry.action("command").orElseThrow().execute(
-                new ActionDefinition("command", Map.of("command", "say %player% found %entity_type%")),
+        registry.action("console_command").orElseThrow().execute(
+                new ActionDefinition("console_command", Map.of("command", "say %player% found %entity_type%")),
                 TriggerContext.forEntity(entity, player));
 
         assertThat(dispatcher.consoleCommands).containsExactly("say Alex found SHEEP");
+    }
+
+    @Test
+    void playerCommandDispatchesAsTriggeringPlayer() {
+        Player player = mock(Player.class);
+        RecordingCommandDispatcher dispatcher = new RecordingCommandDispatcher();
+        BukkitEffectActionRegistry registry = registry(dispatcher);
+
+        registry.action("player_command").orElseThrow().execute(
+                new ActionDefinition("player_command", Map.of("command", "spawn")),
+                TriggerContext.forEntity(mock(LivingEntity.class), player));
+
+        assertThat(dispatcher.playerCommands).containsExactly("spawn");
+        assertThat(dispatcher.player).isSameAs(player);
+    }
+
+    @Test
+    void opPlayerCommandDispatchesAsTemporaryOpPlayer() {
+        Player player = mock(Player.class);
+        RecordingCommandDispatcher dispatcher = new RecordingCommandDispatcher();
+        BukkitEffectActionRegistry registry = registry(dispatcher);
+
+        registry.action("op_player_command").orElseThrow().execute(
+                new ActionDefinition("op_player_command", Map.of("command", "adminthing")),
+                TriggerContext.forEntity(mock(LivingEntity.class), player));
+
+        assertThat(dispatcher.opPlayerCommands).containsExactly("adminthing");
+        assertThat(dispatcher.player).isSameAs(player);
+    }
+
+    @Test
+    void xpDropDropsExperienceAtEntityLocation() {
+        LivingEntity entity = mock(LivingEntity.class);
+        Location location = mock(Location.class);
+        World world = mock(World.class);
+        RecordingExperienceDropper experienceDropper = new RecordingExperienceDropper();
+        when(entity.getLocation()).thenReturn(location);
+        when(location.getWorld()).thenReturn(world);
+        BukkitEffectActionRegistry registry = registry(experienceDropper);
+
+        registry.action("xp_drop").orElseThrow().execute(
+                new ActionDefinition("xp_drop", Map.of("amount", 7)),
+                TriggerContext.forEntity(entity, null));
+
+        assertThat(experienceDropper.world).isSameAs(world);
+        assertThat(experienceDropper.location).isSameAs(location);
+        assertThat(experienceDropper.amount).isEqualTo(7);
+    }
+
+    @Test
+    void healIncreasesTargetHealthUpToMaximum() {
+        Player player = mock(Player.class);
+        RecordingHealthEditor healthEditor = new RecordingHealthEditor(10.0, 14.0);
+        BukkitEffectActionRegistry registry = registry(healthEditor);
+
+        registry.action("heal").orElseThrow().execute(
+                new ActionDefinition("heal", Map.of("amount", 8.0)),
+                TriggerContext.forEntity(mock(LivingEntity.class), player));
+
+        assertThat(healthEditor.target).isSameAs(player);
+        assertThat(healthEditor.health).isEqualTo(14.0);
+    }
+
+    @Test
+    void damageAppliesToConfiguredTarget() {
+        LivingEntity entity = mock(LivingEntity.class);
+        RecordingDamageDealer damageDealer = new RecordingDamageDealer();
+        BukkitEffectActionRegistry registry = registry(damageDealer);
+
+        registry.action("damage").orElseThrow().execute(
+                new ActionDefinition("damage", Map.of("amount", 3.5, "target", "mob")),
+                TriggerContext.forEntity(entity, mock(Player.class)));
+
+        assertThat(damageDealer.target).isSameAs(entity);
+        assertThat(damageDealer.source).isSameAs(entity);
+        assertThat(damageDealer.amount).isEqualTo(3.5);
+    }
+
+    @Test
+    void knockbackPushesPlayerAwayFromMob() {
+        LivingEntity entity = mock(LivingEntity.class);
+        Player player = mock(Player.class);
+        Location entityLocation = location(0, 64, 0);
+        Location playerLocation = location(3, 64, 4);
+        RecordingVelocityApplier velocityApplier = new RecordingVelocityApplier();
+        when(entity.getLocation()).thenReturn(entityLocation);
+        when(player.getLocation()).thenReturn(playerLocation);
+        BukkitEffectActionRegistry registry = registry(velocityApplier);
+
+        registry.action("knockback").orElseThrow().execute(
+                new ActionDefinition("knockback", Map.of("strength", 2.0, "y", 0.4)),
+                TriggerContext.forEntity(entity, player));
+
+        assertThat(velocityApplier.target).isSameAs(player);
+        assertThat(velocityApplier.velocity.getX()).isCloseTo(1.2, org.assertj.core.data.Offset.offset(0.001));
+        assertThat(velocityApplier.velocity.getY()).isEqualTo(0.4);
+        assertThat(velocityApplier.velocity.getZ()).isCloseTo(1.6, org.assertj.core.data.Offset.offset(0.001));
+    }
+
+    @Test
+    void lightningEffectStrikesEntityLocationWithoutDamage() {
+        LivingEntity entity = mock(LivingEntity.class);
+        Location location = mock(Location.class);
+        World world = mock(World.class);
+        RecordingWorldEffects worldEffects = new RecordingWorldEffects();
+        when(entity.getLocation()).thenReturn(location);
+        when(location.getWorld()).thenReturn(world);
+        BukkitEffectActionRegistry registry = registry(worldEffects);
+
+        registry.action("lightning_effect").orElseThrow().execute(
+                new ActionDefinition("lightning_effect", Map.of()),
+                TriggerContext.forEntity(entity, mock(Player.class)));
+
+        assertThat(worldEffects.world).isSameAs(world);
+        assertThat(worldEffects.location).isSameAs(location);
     }
 
     @Test
@@ -150,6 +266,15 @@ final class BukkitEffectActionRegistryTest {
         return registry(new RecordingItemDropper(), new RecordingPotionApplier());
     }
 
+    private static BukkitEffectActionRegistry registry(RecordingCommandDispatcher dispatcher) {
+        return new BukkitEffectActionRegistry(
+                new NoopEconomy(),
+                new FixedRandom(0),
+                dispatcher,
+                new RecordingItemDropper(),
+                new RecordingPotionApplier());
+    }
+
     private static BukkitEffectActionRegistry registry(RecordingItemDropper dropper) {
         return registry(dropper, new RecordingPotionApplier());
     }
@@ -163,6 +288,51 @@ final class BukkitEffectActionRegistryTest {
                 new RecordingCommandDispatcher(),
                 dropper,
                 potionApplier);
+    }
+
+    private static BukkitEffectActionRegistry registry(RecordingExperienceDropper experienceDropper) {
+        return registry(new RecordingItemDropper(), new RecordingPotionApplier(), experienceDropper);
+    }
+
+    private static BukkitEffectActionRegistry registry(RecordingHealthEditor healthEditor) {
+        return registry(new RecordingItemDropper(), new RecordingPotionApplier(), healthEditor);
+    }
+
+    private static BukkitEffectActionRegistry registry(RecordingDamageDealer damageDealer) {
+        return registry(new RecordingItemDropper(), new RecordingPotionApplier(), damageDealer);
+    }
+
+    private static BukkitEffectActionRegistry registry(RecordingVelocityApplier velocityApplier) {
+        return registry(new RecordingItemDropper(), new RecordingPotionApplier(), velocityApplier);
+    }
+
+    private static BukkitEffectActionRegistry registry(RecordingWorldEffects worldEffects) {
+        return registry(new RecordingItemDropper(), new RecordingPotionApplier(), worldEffects);
+    }
+
+    private static BukkitEffectActionRegistry registry(
+            RecordingItemDropper dropper,
+            RecordingPotionApplier potionApplier,
+            Object extra) {
+        return new BukkitEffectActionRegistry(
+                new NoopEconomy(),
+                new FixedRandom(0),
+                new RecordingCommandDispatcher(),
+                dropper,
+                potionApplier,
+                extra instanceof RecordingExperienceDropper experienceDropper
+                        ? experienceDropper
+                        : new RecordingExperienceDropper(),
+                extra instanceof RecordingHealthEditor healthEditor ? healthEditor : new RecordingHealthEditor(0, 20),
+                extra instanceof RecordingDamageDealer damageDealer ? damageDealer : new RecordingDamageDealer(),
+                extra instanceof RecordingVelocityApplier velocityApplier ? velocityApplier : new RecordingVelocityApplier(),
+                extra instanceof RecordingWorldEffects worldEffects ? worldEffects : new RecordingWorldEffects());
+    }
+
+    private static Location location(double x, double y, double z) {
+        Location location = mock(Location.class);
+        when(location.toVector()).thenReturn(new Vector(x, y, z));
+        return location;
     }
 
     private static final class RecordingEconomy implements EconomyAdapter {
@@ -194,6 +364,9 @@ final class BukkitEffectActionRegistryTest {
 
     private static final class RecordingCommandDispatcher implements BukkitEffectActionRegistry.CommandDispatcher {
         private final List<String> consoleCommands = new ArrayList<>();
+        private final List<String> playerCommands = new ArrayList<>();
+        private final List<String> opPlayerCommands = new ArrayList<>();
+        private Player player;
 
         @Override
         public void dispatchConsole(String command) {
@@ -202,6 +375,14 @@ final class BukkitEffectActionRegistryTest {
 
         @Override
         public void dispatchPlayer(Player player, String command) {
+            this.player = player;
+            playerCommands.add(command);
+        }
+
+        @Override
+        public void dispatchOpPlayer(Player player, String command) {
+            this.player = player;
+            opPlayerCommands.add(command);
         }
     }
 
@@ -232,6 +413,82 @@ final class BukkitEffectActionRegistryTest {
             this.effectName = effectName;
             this.durationTicks = durationTicks;
             this.amplifier = amplifier;
+        }
+    }
+
+    private static final class RecordingExperienceDropper implements BukkitEffectActionRegistry.ExperienceDropper {
+        private World world;
+        private Location location;
+        private int amount;
+
+        @Override
+        public void drop(World world, Location location, int amount) {
+            this.world = world;
+            this.location = location;
+            this.amount = amount;
+        }
+    }
+
+    private static final class RecordingHealthEditor implements BukkitEffectActionRegistry.HealthEditor {
+        private final double currentHealth;
+        private final double maxHealth;
+        private LivingEntity target;
+        private double health;
+
+        private RecordingHealthEditor(double currentHealth, double maxHealth) {
+            this.currentHealth = currentHealth;
+            this.maxHealth = maxHealth;
+        }
+
+        @Override
+        public double health(LivingEntity target) {
+            return currentHealth;
+        }
+
+        @Override
+        public double maxHealth(LivingEntity target) {
+            return maxHealth;
+        }
+
+        @Override
+        public void setHealth(LivingEntity target, double health) {
+            this.target = target;
+            this.health = health;
+        }
+    }
+
+    private static final class RecordingDamageDealer implements BukkitEffectActionRegistry.DamageDealer {
+        private LivingEntity target;
+        private LivingEntity source;
+        private double amount;
+
+        @Override
+        public void damage(LivingEntity target, double amount, LivingEntity source) {
+            this.target = target;
+            this.amount = amount;
+            this.source = source;
+        }
+    }
+
+    private static final class RecordingVelocityApplier implements BukkitEffectActionRegistry.VelocityApplier {
+        private LivingEntity target;
+        private Vector velocity;
+
+        @Override
+        public void setVelocity(LivingEntity target, Vector velocity) {
+            this.target = target;
+            this.velocity = velocity;
+        }
+    }
+
+    private static final class RecordingWorldEffects implements BukkitEffectActionRegistry.WorldEffects {
+        private World world;
+        private Location location;
+
+        @Override
+        public void strikeLightningEffect(World world, Location location) {
+            this.world = world;
+            this.location = location;
         }
     }
 
