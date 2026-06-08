@@ -8,13 +8,14 @@ import com.nick.mobrarity.tag.MobRarityData;
 import com.nick.mobrarity.tag.MobTagService;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 
 public final class MobSpawnListener implements Listener {
-    private final Map<EntityType, MobProfile> mobProfiles;
+    private final Supplier<Map<EntityType, MobProfile>> mobProfilesSupplier;
     private final SpawnRarityService spawnRarityService;
     private final MobLevelService mobLevelService;
     private final MobTagService mobTagService;
@@ -24,7 +25,15 @@ public final class MobSpawnListener implements Listener {
             SpawnRarityService spawnRarityService,
             MobLevelService mobLevelService,
             MobTagService mobTagService) {
-        this.mobProfiles = Map.copyOf(mobProfiles);
+        this(() -> Map.copyOf(mobProfiles), spawnRarityService, mobLevelService, mobTagService);
+    }
+
+    public MobSpawnListener(
+            Supplier<Map<EntityType, MobProfile>> mobProfilesSupplier,
+            SpawnRarityService spawnRarityService,
+            MobLevelService mobLevelService,
+            MobTagService mobTagService) {
+        this.mobProfilesSupplier = mobProfilesSupplier;
         this.spawnRarityService = spawnRarityService;
         this.mobLevelService = mobLevelService;
         this.mobTagService = mobTagService;
@@ -40,7 +49,7 @@ public final class MobSpawnListener implements Listener {
     }
 
     void processSpawn(EntityType entityType, CreatureSpawnEvent.SpawnReason spawnReason, double y, TagCallback tagCallback) {
-        MobProfile profile = mobProfiles.get(entityType);
+        MobProfile profile = mobProfilesSupplier.get().get(entityType);
         if (profile == null) {
             return;
         }
