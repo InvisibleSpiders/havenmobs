@@ -1,6 +1,7 @@
 # MobRarity
 
-MobRarity is a Paper plugin foundation for configurable mob rarities, named variants, spawn-time tagging, optional mob level calculation, and command/listener shells for future effects and integrations.
+MobRarity is a Paper plugin foundation for configurable mob rarities, named variants,
+spawn-time tagging, mob levels, effects, and integrations.
 
 ## Build
 
@@ -20,65 +21,29 @@ The plugin jar is written to `build/libs/MobRarity-1.0.0-SNAPSHOT.jar`.
 
 Base command: `/mobrarity` with aliases `/mr` and `/mobr`.
 
-- `/mobrarity reload`
-  Permission: `mobrarity.reload`
-  Reloads `tiers.yml` and `mobs.yml` without restarting the server.
-- `/mobrarity validate`
-  Permission: `mobrarity.validate`
-  Parses `tiers.yml` and `mobs.yml` and reports whether they are valid without applying changes.
-- `/mobrarity list tiers`
-  Permission: `mobrarity.list`
-  Lists configured global rarity tiers.
-- `/mobrarity list variants`
-  Permission: `mobrarity.list`
-  Lists configured mob variant keys.
-- `/mobrarity list mobs`
-  Permission: `mobrarity.list`
-  Lists mob types with MobRarity profiles.
-- `/mobrarity inspect`
-  Permission: `mobrarity.inspect`
-  Inspects the living mob in the player's crosshair and reports its MobRarity data.
-- `/mobrarity set <tier> <variant> [level]`
-  Permission: `mobrarity.set`
-  Assigns configured MobRarity data to the targeted living mob.
-- `/mobrarity clear`
-  Permission: `mobrarity.clear`
-  Removes MobRarity data from the targeted living mob.
-- `/mobrarity spawn <entity> <tier> <variant> [level] [player]`
-  Permission: `mobrarity.spawn`
-  Spawns and tags a configured mob on the sender or named online player.
+- `/mobrarity reload`: requires `mobrarity.reload`; reloads rarity config files.
+- `/mobrarity validate`: requires `mobrarity.validate`; checks config without applying changes.
+- `/mobrarity list tiers`: requires `mobrarity.list`; lists configured global rarity tiers.
+- `/mobrarity list variants`: requires `mobrarity.list`; lists configured mob variant keys.
+- `/mobrarity list mobs`: requires `mobrarity.list`; lists mob types with MobRarity profiles.
+- `/mobrarity inspect`: requires `mobrarity.inspect`; inspects the targeted living mob.
+- `/mobrarity set TIER VARIANT [level]`: requires `mobrarity.set`; tags the targeted mob.
+- `/mobrarity clear`: requires `mobrarity.clear`; clears data from the targeted mob.
+- `/mobrarity spawn ENTITY TIER VARIANT [level] [player]`: requires `mobrarity.spawn`.
 
 `mobrarity.admin` grants all admin command permissions and the claim-check bypass permission.
 
 ## Permission Reference
 
-- `mobrarity.admin`
-  Default: `op`
-  Parent permission for every MobRarity admin command and bypass permission.
-- `mobrarity.reload`
-  Default: `op`
-  Allows `/mobrarity reload`.
-- `mobrarity.validate`
-  Default: `op`
-  Allows `/mobrarity validate`.
-- `mobrarity.list`
-  Default: `op`
-  Allows `/mobrarity list tiers`, `/mobrarity list variants`, and `/mobrarity list mobs`.
-- `mobrarity.inspect`
-  Default: `op`
-  Allows `/mobrarity inspect`.
-- `mobrarity.set`
-  Default: `op`
-  Allows `/mobrarity set`.
-- `mobrarity.clear`
-  Default: `op`
-  Allows `/mobrarity clear`.
-- `mobrarity.spawn`
-  Default: `op`
-  Allows `/mobrarity spawn`.
-- `mobrarity.bypass.claim-check`
-  Default: `op`
-  Allows MobRarity effects to run for the player even when a claim protection check would normally deny them.
+- `mobrarity.admin`: default `op`; parent permission for admin commands and bypasses.
+- `mobrarity.reload`: default `op`; allows `/mobrarity reload`.
+- `mobrarity.validate`: default `op`; allows `/mobrarity validate`.
+- `mobrarity.list`: default `op`; allows all `/mobrarity list` categories.
+- `mobrarity.inspect`: default `op`; allows `/mobrarity inspect`.
+- `mobrarity.set`: default `op`; allows `/mobrarity set`.
+- `mobrarity.clear`: default `op`; allows `/mobrarity clear`.
+- `mobrarity.spawn`: default `op`; allows `/mobrarity spawn`.
+- `mobrarity.bypass.claim-check`: default `op`; bypasses claim checks for effects.
 
 ## Effect Actions
 
@@ -87,16 +52,17 @@ Configured triggers currently support:
 - `item_drop` with `material` and numeric or ranged `amount`, such as `2-8`.
 - `potion_effect` with `effect`, `duration-ticks`, `amplifier`, and optional `target: player|mob`.
 - `currency_drop` with `amount`, paid through VaultUnlocked/Vault economy when available.
-- `command` with `command` and optional `as: console|player`; `%player%` and `%entity_type%` placeholders are replaced.
-- `hostile_target`, which makes a Bukkit `Mob` target the triggering player when the entity supports targeting.
+- `command` with `command` and optional `as: console|player`.
+- `hostile_target`, which makes a Bukkit `Mob` target the triggering player.
 
-`on_shear`, `on_aura_tick`, `on_damage`, `on_tame`, `on_breed`, `on_interact`, and player-caused `on_death` triggers are wired now.
+Supported triggers include `on_shear`, `on_aura_tick`, `on_damage`, `on_tame`,
+`on_breed`, `on_interact`, and player-caused `on_death`.
 
 ## Claim Protection
 
-When LandClaims is installed and exposes `LandClaimsApi`, MobRarity checks claim access before effect actions run.
+When LandClaims exposes `LandClaimsApi`, MobRarity checks claim access before effects run.
 
-- Any action can set `claim-action` in `mobs.yml` to choose the LandClaims action or flag key checked before the effect runs.
+- Any action can set `claim-action` in `mobs.yml` to choose the LandClaims flag key.
 - `hostile_target` defaults to `mob_griefing`.
-- Other actions default to their action type, such as `item_drop`, `currency_drop`, or `potion_effect`.
+- Other actions default to their action type.
 - If LandClaims is not installed, the current fallback policy allows effects to run.
