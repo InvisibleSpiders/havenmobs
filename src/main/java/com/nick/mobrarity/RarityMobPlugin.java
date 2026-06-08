@@ -5,6 +5,8 @@ import com.nick.mobrarity.command.MobRarityTabCompleter;
 import com.nick.mobrarity.command.BukkitTargetResolver;
 import com.nick.mobrarity.command.MobRarityAdminService;
 import com.nick.mobrarity.command.AdminCommandResult;
+import com.nick.mobrarity.effect.AuraTickService;
+import com.nick.mobrarity.effect.BukkitEntityScanner;
 import com.nick.mobrarity.effect.BukkitEffectActionRegistry;
 import com.nick.mobrarity.effect.EffectEngine;
 import com.nick.mobrarity.effect.RarityTriggerService;
@@ -12,7 +14,10 @@ import com.nick.mobrarity.config.ConfigService;
 import com.nick.mobrarity.config.ConfigSnapshot;
 import com.nick.mobrarity.config.ConfigValidationException;
 import com.nick.mobrarity.integration.EconomyAdapter;
+import com.nick.mobrarity.integration.LandClaimsProtectionAdapter;
 import com.nick.mobrarity.integration.NoEconomyAdapter;
+import com.nick.mobrarity.integration.ProtectionAdapter;
+import com.nick.mobrarity.integration.ProtectionFallbackPolicy;
 import com.nick.mobrarity.integration.VaultUnlockedEconomyAdapter;
 import com.nick.mobrarity.level.LevelSettings;
 import com.nick.mobrarity.level.MobLevelService;
@@ -57,6 +62,15 @@ public final class RarityMobPlugin extends JavaPlugin {
                 new BukkitEffectActionRegistry(economyAdapter, RandomGenerator.getDefault()),
                 Math::random);
         RarityTriggerService triggerService = new RarityTriggerService(runtimeConfig::get, mobTagService);
+        ProtectionAdapter protectionAdapter = new LandClaimsProtectionAdapter(null, ProtectionFallbackPolicy.ALLOW);
+        BukkitEntityScanner entityScanner = new BukkitEntityScanner();
+        AuraTickService auraTickService = new AuraTickService(
+                entityScanner::livingEntities,
+                entityScanner::onlinePlayers,
+                triggerService::trigger,
+                protectionAdapter,
+                effectEngine);
+        Bukkit.getScheduler().runTaskTimer(this, () -> auraTickService.tick(Bukkit.getCurrentTick()), 20L, 20L);
 
         getServer().getPluginManager().registerEvents(
                 new MobSpawnListener(() -> runtimeConfig.get().mobProfiles(), spawnRarityService, mobLevelService, mobTagService),
