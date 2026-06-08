@@ -59,6 +59,18 @@ Configured triggers currently support:
 - `lightning_effect`, which shows lightning without dealing lightning damage.
 - `hostile_target`, which makes a Bukkit `Mob` target the triggering player.
 
+## Placeholders
+
+MobRarity text supports built-in placeholders before MiniMessage parsing.
+PlaceholderAPI exposes the same values for the player's targeted rarity mob.
+
+- `%mobrarity_tier%`: tier display text, such as `Rare`.
+- `%mobrarity_tier_key%`: raw tier key, such as `rare`.
+- `%mobrarity_variant%`: variant display text, such as `Toxic Sheep`.
+- `%mobrarity_variant_key%`: raw variant key, such as `toxic_sheep`.
+- `%mobrarity_level%`: mob level.
+- `%mobrarity_entity%`: mob type, such as `Sheep`.
+
 Supported triggers include `on_shear`, `on_aura_tick`, `on_damage`, `on_tame`,
 `on_breed`, `on_interact`, and player-caused `on_death`.
 

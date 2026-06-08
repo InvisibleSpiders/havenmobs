@@ -5,6 +5,9 @@
 # Higher weights are more common when the plugin rolls a rarity.
 # MiniMessage is supported in display text.
 # Placeholder values such as %mobrarity_level% are replaced before MiniMessage rendering.
+# Available placeholders include %mobrarity_tier%, %mobrarity_tier_key%,
+# %mobrarity_variant%, %mobrarity_variant_key%, %mobrarity_level%,
+# and %mobrarity_entity%.
 # Tier trigger actions are inherited by variants using that tier.
 # Per-mob variant triggers in mobs.yml can add more actions for specific mobs.
 # chance is 0.0 to 1.0, where 1.0 always runs after the trigger fires.

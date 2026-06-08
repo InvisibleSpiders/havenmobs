@@ -16,6 +16,7 @@ import com.nick.mobrarity.config.ConfigSnapshot;
 import com.nick.mobrarity.config.ConfigValidationException;
 import com.nick.mobrarity.integration.EconomyAdapter;
 import com.nick.mobrarity.integration.LandClaimsProtectionFactory;
+import com.nick.mobrarity.integration.MobRarityPlaceholderExpansion;
 import com.nick.mobrarity.integration.NoEconomyAdapter;
 import com.nick.mobrarity.integration.ProtectionAdapter;
 import com.nick.mobrarity.integration.ProtectionFallbackPolicy;
@@ -57,6 +58,7 @@ public final class RarityMobPlugin extends JavaPlugin {
         LevelSettings levelSettings = new LevelSettings(true, 250, 1, 100, true, 64, 0.15, 25);
         MobLevelService mobLevelService = new MobLevelService(levelSettings);
         MobTagService mobTagService = new MobTagService(this);
+        registerPlaceholderExpansion(runtimeConfig, mobTagService);
         PlayerDamageTracker playerDamageTracker = new PlayerDamageTracker(20L * 30L);
         EconomyAdapter economyAdapter = loadEconomyAdapter();
         ProtectionAdapter protectionAdapter = loadProtectionAdapter();
@@ -158,6 +160,20 @@ public final class RarityMobPlugin extends JavaPlugin {
             return new NoEconomyAdapter();
         }
         return new VaultUnlockedEconomyAdapter(registration.getProvider());
+    }
+
+    private void registerPlaceholderExpansion(
+            AtomicReference<ConfigSnapshot> runtimeConfig,
+            MobTagService mobTagService) {
+        if (!getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            return;
+        }
+        new MobRarityPlaceholderExpansion(
+                runtimeConfig::get,
+                mobTagService,
+                new BukkitTargetResolver(32),
+                getPluginMeta().getVersion())
+                .register();
     }
 
     private ProtectionAdapter loadProtectionAdapter() {

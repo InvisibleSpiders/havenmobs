@@ -13,6 +13,8 @@
 # variant.weight controls how often that variant is picked for this mob type.
 # variant.tier must match a key from tiers.yml.
 # display.nametag overrides the tier nametag for this specific variant.
+# Nametags can use %mobrarity_tier%, %mobrarity_variant%, %mobrarity_level%,
+# %mobrarity_entity%, and their *_key variants.
 # Triggers define when configured actions run.
 # Trigger chance is checked before its actions run; omit chance for 1.0.
 # on_aura_tick uses interval-ticks and radius to run effects near the mob.
