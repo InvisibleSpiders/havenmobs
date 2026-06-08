@@ -2,5 +2,5 @@ package com.nick.mobrarity.effect;
 
 @FunctionalInterface
 public interface EffectAction {
-    void execute(TriggerContext context);
+    void execute(ActionDefinition action, TriggerContext context);
 }

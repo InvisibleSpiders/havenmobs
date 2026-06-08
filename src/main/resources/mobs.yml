@@ -10,6 +10,11 @@
 # PLUGIN covers other plugin-created entities when Paper reports plugin spawning.
 # Variants are named special mobs tied to a global tier.
 # Triggers define when configured actions run.
+# Supported actions in this chunk:
+# - item_drop: material + amount, where amount can be a number or "min-max".
+# - potion_effect: effect + duration-ticks + amplifier, target defaults to the player.
+# - currency_drop: amount deposited through VaultUnlocked/Vault economy when available.
+# - command: command text, optional as: console|player, supports %player% and %entity_type%.
 mobs:
   SHEEP:
     spawn-sources:

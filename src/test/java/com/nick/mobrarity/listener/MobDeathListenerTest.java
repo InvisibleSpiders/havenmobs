@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.nick.mobrarity.effect.ActionDefinition;
 import com.nick.mobrarity.effect.EffectEngine;
+import com.nick.mobrarity.effect.TriggerContext;
 import com.nick.mobrarity.effect.TriggerDefinition;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -43,15 +44,17 @@ final class MobDeathListenerTest {
         when(entity.getLastDamageCause()).thenReturn(fatalCause);
         PlayerDamageTracker tracker = new PlayerDamageTracker(100);
         tracker.record(entityId, playerId, 40);
-        List<String> executed = new ArrayList<>();
-        EffectEngine effectEngine = new EffectEngine(type -> Optional.of(context -> executed.add(type)), () -> 0.0);
+        List<TriggerContext> contexts = new ArrayList<>();
+        EffectEngine effectEngine = new EffectEngine(type -> Optional.of((action, context) -> contexts.add(context)), () -> 0.0);
         TriggerDefinition trigger = new TriggerDefinition("on_death", 1.0, 0, 0,
                 List.of(new ActionDefinition("message", Map.of())));
         MobDeathListener listener = new MobDeathListener(tracker, effectEngine, ignored -> Optional.of(trigger), () -> 100);
 
         listener.onEntityDeath(deathEvent);
 
-        assertThat(executed).containsExactly("message");
+        assertThat(contexts).hasSize(1);
+        assertThat(contexts.getFirst().entity()).contains(entity);
+        assertThat(contexts.getFirst().player()).contains(player);
     }
 
     @Test
@@ -66,7 +69,7 @@ final class MobDeathListenerTest {
         PlayerDamageTracker tracker = new PlayerDamageTracker(100);
         tracker.record(entityId, playerId, 40);
         List<String> executed = new ArrayList<>();
-        EffectEngine effectEngine = new EffectEngine(type -> Optional.of(context -> executed.add(type)), () -> 0.0);
+        EffectEngine effectEngine = new EffectEngine(type -> Optional.of((action, context) -> executed.add(type)), () -> 0.0);
         TriggerDefinition trigger = new TriggerDefinition("on_death", 1.0, 0, 0,
                 List.of(new ActionDefinition("message", Map.of())));
         MobDeathListener listener = new MobDeathListener(tracker, effectEngine, ignored -> Optional.of(trigger), () -> 100);
@@ -86,7 +89,7 @@ final class MobDeathListenerTest {
         when(deathEvent.getEntity()).thenReturn(entity);
         when(entity.getLastDamageCause()).thenReturn(fatalCause);
         List<String> executed = new ArrayList<>();
-        EffectEngine effectEngine = new EffectEngine(type -> Optional.of(context -> executed.add(type)), () -> 0.0);
+        EffectEngine effectEngine = new EffectEngine(type -> Optional.of((action, context) -> executed.add(type)), () -> 0.0);
         TriggerDefinition trigger = new TriggerDefinition("on_death", 1.0, 0, 0,
                 List.of(new ActionDefinition("message", Map.of())));
         MobDeathListener listener = new MobDeathListener(

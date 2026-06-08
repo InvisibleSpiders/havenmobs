@@ -5,10 +5,15 @@ import com.nick.mobrarity.command.MobRarityTabCompleter;
 import com.nick.mobrarity.command.BukkitTargetResolver;
 import com.nick.mobrarity.command.MobRarityAdminService;
 import com.nick.mobrarity.command.AdminCommandResult;
+import com.nick.mobrarity.effect.BukkitEffectActionRegistry;
 import com.nick.mobrarity.effect.EffectEngine;
+import com.nick.mobrarity.effect.RarityTriggerService;
 import com.nick.mobrarity.config.ConfigService;
 import com.nick.mobrarity.config.ConfigSnapshot;
 import com.nick.mobrarity.config.ConfigValidationException;
+import com.nick.mobrarity.integration.EconomyAdapter;
+import com.nick.mobrarity.integration.NoEconomyAdapter;
+import com.nick.mobrarity.integration.VaultUnlockedEconomyAdapter;
 import com.nick.mobrarity.level.LevelSettings;
 import com.nick.mobrarity.level.MobLevelService;
 import com.nick.mobrarity.listener.MobActivityListener;
@@ -25,10 +30,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.random.RandomGenerator;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.RegisteredServiceProvider;
 
 public final class RarityMobPlugin extends JavaPlugin {
     @Override
@@ -45,7 +52,11 @@ public final class RarityMobPlugin extends JavaPlugin {
         MobLevelService mobLevelService = new MobLevelService(levelSettings);
         MobTagService mobTagService = new MobTagService(this);
         PlayerDamageTracker playerDamageTracker = new PlayerDamageTracker(20L * 30L);
-        EffectEngine effectEngine = new EffectEngine(type -> Optional.empty(), Math::random);
+        EconomyAdapter economyAdapter = loadEconomyAdapter();
+        EffectEngine effectEngine = new EffectEngine(
+                new BukkitEffectActionRegistry(economyAdapter, RandomGenerator.getDefault()),
+                Math::random);
+        RarityTriggerService triggerService = new RarityTriggerService(runtimeConfig::get, mobTagService);
 
         getServer().getPluginManager().registerEvents(
                 new MobSpawnListener(() -> runtimeConfig.get().mobProfiles(), spawnRarityService, mobLevelService, mobTagService),
@@ -54,9 +65,9 @@ public final class RarityMobPlugin extends JavaPlugin {
                 new MobDamageListener(playerDamageTracker, Bukkit::getCurrentTick),
                 this);
         getServer().getPluginManager().registerEvents(
-                new MobDeathListener(playerDamageTracker, effectEngine, entity -> Optional.empty(), Bukkit::getCurrentTick),
+                new MobDeathListener(playerDamageTracker, effectEngine, entity -> triggerService.trigger(entity, "on_death"), Bukkit::getCurrentTick),
                 this);
-        getServer().getPluginManager().registerEvents(new MobActivityListener(), this);
+        getServer().getPluginManager().registerEvents(new MobActivityListener(effectEngine, triggerService::trigger), this);
         PluginCommand mobRarityCommand = getCommand("mobrarity");
         if (mobRarityCommand != null) {
             MobRarityAdminService adminService = new MobRarityAdminService(
@@ -106,5 +117,13 @@ public final class RarityMobPlugin extends JavaPlugin {
                 .map(Player::getName)
                 .sorted()
                 .toList();
+    }
+
+    private EconomyAdapter loadEconomyAdapter() {
+        RegisteredServiceProvider<Economy> registration = getServer().getServicesManager().getRegistration(Economy.class);
+        if (registration == null) {
+            return new NoEconomyAdapter();
+        }
+        return new VaultUnlockedEconomyAdapter(registration.getProvider());
     }
 }

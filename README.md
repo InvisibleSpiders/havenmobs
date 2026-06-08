@@ -37,3 +37,14 @@ Base command: `/mobrarity` with aliases `/mr` and `/mobr`.
 - `/mobrarity spawn <entity> <tier> <variant> [level] [player]` spawns and tags a configured mob on the sender or named online player.
 
 All admin commands have per-action permissions under `mobrarity.<action>`, with `mobrarity.admin` granting the full set.
+
+## Effect Actions
+
+Configured triggers currently support:
+
+- `item_drop` with `material` and numeric or ranged `amount`, such as `2-8`.
+- `potion_effect` with `effect`, `duration-ticks`, `amplifier`, and optional `target: player|mob`.
+- `currency_drop` with `amount`, paid through VaultUnlocked/Vault economy when available.
+- `command` with `command` and optional `as: console|player`; `%player%` and `%entity_type%` placeholders are replaced.
+
+`on_shear` and player-caused `on_death` triggers are wired now. Aura ticking, tame, breed, and interact triggers are planned next.
