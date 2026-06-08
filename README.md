@@ -47,4 +47,4 @@ Configured triggers currently support:
 - `currency_drop` with `amount`, paid through VaultUnlocked/Vault economy when available.
 - `command` with `command` and optional `as: console|player`; `%player%` and `%entity_type%` placeholders are replaced.
 
-`on_shear` and player-caused `on_death` triggers are wired now. Aura ticking, tame, breed, and interact triggers are planned next.
+`on_shear`, `on_aura_tick`, and player-caused `on_death` triggers are wired now. Tame, breed, and interact triggers are planned next.
