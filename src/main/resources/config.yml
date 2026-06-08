@@ -6,14 +6,18 @@ integrations:
     # allow: run effects even when LandClaims is missing.
     # deny-protected-effects: block claim-gated gameplay effects, allow visuals.
     # deny-all-effects: block all non-admin rarity triggers until LandClaims is available.
+    # This is only used when LandClaims is absent or its API throws during a check.
     missing-service-policy: allow
   vaultunlocked:
+    # Currency effects are skipped safely if no Vault-compatible economy is available.
     enabled: true
   placeholderapi:
+    # PlaceholderAPI values are applied before MiniMessage is parsed.
     enabled: true
 
 display:
   # disabled, always, within-distance, or targeted.
+  # targeted means titles/nametags appear when the player is looking at the mob.
   nametag-mode: targeted
   title-mode: targeted
   visibility-distance: 18.0
@@ -25,6 +29,7 @@ leveling:
     world:
       # world-spawn uses the world's current spawn location.
       # blocks-per-level controls how quickly rarity levels increase with distance.
+      # min-level and max-level clamp the final calculated level.
       origin: world-spawn
       blocks-per-level: 250
       min-level: 1

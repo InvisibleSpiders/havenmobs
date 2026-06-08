@@ -19,7 +19,7 @@ final class MobRarityTabCompleterTest {
                         mock(Command.class),
                         "mobrarity",
                         new String[] {""}))
-                .containsExactly("reload", "inspect", "set", "spawn", "clear");
+                .containsExactly("reload", "validate", "list", "inspect", "set", "spawn", "clear");
     }
 
     @Test
@@ -72,5 +72,17 @@ final class MobRarityTabCompleterTest {
                         "mobrarity",
                         new String[] {"spawn", "SHEEP", "rare", "rare_sheep", "1", "A"}))
                 .containsExactly("Alex");
+    }
+
+    @Test
+    void listSuggestsCategories() {
+        MobRarityTabCompleter completer = new MobRarityTabCompleter();
+
+        assertThat(completer.onTabComplete(
+                        mock(CommandSender.class),
+                        mock(Command.class),
+                        "mobrarity",
+                        new String[] {"list", ""}))
+                .containsExactly("tiers", "variants", "mobs");
     }
 }

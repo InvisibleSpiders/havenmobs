@@ -9,7 +9,13 @@
 # COMMAND covers this plugin's admin spawn command.
 # PLUGIN covers other plugin-created entities when Paper reports plugin spawning.
 # Variants are named special mobs tied to a global tier.
+# A variant key should not contain "|"; the plugin uses that internally for mob data.
+# variant.weight controls how often that variant is picked for this mob type.
+# variant.tier must match a key from tiers.yml.
+# display.nametag overrides the tier nametag for this specific variant.
 # Triggers define when configured actions run.
+# Trigger chance is checked before its actions run; omit chance for 1.0.
+# on_aura_tick uses interval-ticks and radius to run effects near the mob.
 # Supported actions in this chunk:
 # - item_drop: material + amount, where amount can be a number or "min-max".
 # - potion_effect: effect + duration-ticks + amplifier, target defaults to the player.
@@ -18,6 +24,7 @@
 # - hostile_target: makes a Mob target the triggering player when the entity supports targeting.
 # Any action can set claim-action to choose the LandClaims flag checked before it runs.
 # By default, hostile_target checks mob_griefing and other actions check their action type.
+# When a trigger came from natural damage without a player source, player-only actions may skip safely.
 mobs:
   SHEEP:
     spawn-sources:

@@ -10,33 +10,43 @@ MobRarity is a Paper plugin foundation for configurable mob rarities, named vari
 
 The plugin jar is written to `build/libs/MobRarity-1.0.0-SNAPSHOT.jar`.
 
-## Smoke Test Server
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-smoke-server.ps1
-```
-
-The script builds the plugin, downloads the latest Paper server jar from PaperMC, creates `.smoke-server`, installs `plugins/MobRarity.jar`, accepts the local test EULA, and starts the server with `nogui`.
-
-Use `-PaperVersion <version>` to pin a Paper version, `-ServerDir <path>` to choose another test server folder, or `-SkipBuild` after a successful local build.
-
 ## Runtime
 
 - Paper 26.1+.
 - Java 25.
 - Optional: LandClaims, VaultUnlocked, PlaceholderAPI.
 
-## Admin Commands
+## Commands And Permissions
 
 Base command: `/mobrarity` with aliases `/mr` and `/mobr`.
 
-- `/mobrarity reload` reloads `tiers.yml` and `mobs.yml` without restarting the server.
-- `/mobrarity inspect` inspects the living mob in the player's crosshair.
-- `/mobrarity set <tier> <variant> [level]` assigns configured MobRarity data to the targeted living mob.
-- `/mobrarity clear` removes MobRarity data from the targeted living mob.
-- `/mobrarity spawn <entity> <tier> <variant> [level] [player]` spawns and tags a configured mob on the sender or named online player.
+| Command | Permission | Description |
+| --- | --- | --- |
+| `/mobrarity reload` | `mobrarity.reload` | Reloads `tiers.yml` and `mobs.yml` without restarting the server. |
+| `/mobrarity validate` | `mobrarity.validate` | Parses `tiers.yml` and `mobs.yml` and reports whether they are valid without applying changes. |
+| `/mobrarity list tiers` | `mobrarity.list` | Lists configured global rarity tiers. |
+| `/mobrarity list variants` | `mobrarity.list` | Lists configured mob variant keys. |
+| `/mobrarity list mobs` | `mobrarity.list` | Lists mob types that have MobRarity profiles. |
+| `/mobrarity inspect` | `mobrarity.inspect` | Inspects the living mob in the player's crosshair and reports its MobRarity data. |
+| `/mobrarity set <tier> <variant> [level]` | `mobrarity.set` | Assigns configured MobRarity data to the targeted living mob. |
+| `/mobrarity clear` | `mobrarity.clear` | Removes MobRarity data from the targeted living mob. |
+| `/mobrarity spawn <entity> <tier> <variant> [level] [player]` | `mobrarity.spawn` | Spawns and tags a configured mob on the sender or named online player. |
 
-All admin commands have per-action permissions under `mobrarity.<action>`, with `mobrarity.admin` granting the full set.
+`mobrarity.admin` grants all admin command permissions and the claim-check bypass permission.
+
+## Permission Reference
+
+| Permission | Default | Description |
+| --- | --- | --- |
+| `mobrarity.admin` | `op` | Parent permission for every MobRarity admin command and bypass permission. |
+| `mobrarity.reload` | `op` | Allows `/mobrarity reload`. |
+| `mobrarity.validate` | `op` | Allows `/mobrarity validate`. |
+| `mobrarity.list` | `op` | Allows `/mobrarity list tiers`, `/mobrarity list variants`, and `/mobrarity list mobs`. |
+| `mobrarity.inspect` | `op` | Allows `/mobrarity inspect`. |
+| `mobrarity.set` | `op` | Allows `/mobrarity set`. |
+| `mobrarity.clear` | `op` | Allows `/mobrarity clear`. |
+| `mobrarity.spawn` | `op` | Allows `/mobrarity spawn`. |
+| `mobrarity.bypass.claim-check` | `op` | Allows MobRarity effects to run for the player even when a claim protection check would normally deny them. |
 
 ## Effect Actions
 
@@ -49,3 +59,12 @@ Configured triggers currently support:
 - `hostile_target`, which makes a Bukkit `Mob` target the triggering player when the entity supports targeting.
 
 `on_shear`, `on_aura_tick`, `on_damage`, `on_tame`, `on_breed`, `on_interact`, and player-caused `on_death` triggers are wired now.
+
+## Claim Protection
+
+When LandClaims is installed and exposes `LandClaimsApi`, MobRarity checks claim access before effect actions run.
+
+- Any action can set `claim-action` in `mobs.yml` to choose the LandClaims action or flag key checked before the effect runs.
+- `hostile_target` defaults to `mob_griefing`.
+- Other actions default to their action type, such as `item_drop`, `currency_drop`, or `potion_effect`.
+- If LandClaims is not installed, the current fallback policy allows effects to run.

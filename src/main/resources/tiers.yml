@@ -5,8 +5,14 @@
 # Higher weights are more common when the plugin rolls a rarity.
 # MiniMessage is supported in display text.
 # Placeholder values such as %mobrarity_level% are replaced before MiniMessage rendering.
+# Tier trigger actions are inherited by variants using that tier.
+# Per-mob variant triggers in mobs.yml can add more actions for specific mobs.
+# chance is 0.0 to 1.0, where 1.0 always runs after the trigger fires.
+# rarity-weight-modifier.per-level increases this tier's spawn chance as mob level rises.
+# display.nametag is a default nametag template for variants that do not override it.
 # Keep particle intervals reasonable; very low values can affect server performance.
-# Later tiers can add trigger sections such as on_spawn or on_death.
+# Supported trigger names include on_spawn, on_death, on_damage, on_shear,
+# on_tame, on_breed, on_interact, and on_aura_tick.
 # Per-mob variants in mobs.yml can override or extend these defaults.
 tiers:
   common:

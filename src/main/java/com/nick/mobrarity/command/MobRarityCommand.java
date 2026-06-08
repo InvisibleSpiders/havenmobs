@@ -13,18 +13,21 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 public final class MobRarityCommand implements CommandExecutor {
-    static final String USAGE = "/mobrarity reload|inspect|set|spawn|clear";
+    static final String USAGE = "/mobrarity reload|validate|list|inspect|set|spawn|clear";
+    private static final String LIST_USAGE = "/mobrarity list <tiers|variants|mobs>";
     private static final String SET_USAGE = "/mobrarity set <tier> <variant> [level]";
     private static final String SPAWN_USAGE = "/mobrarity spawn <entity> <tier> <variant> [level] [player]";
 
     private final AdminService adminService;
     private final AdminAction reloadAction;
+    private final AdminAction validateAction;
     private final PlayerResolver playerResolver;
     private final Supplier<List<String>> playerNameSupplier;
 
     public MobRarityCommand() {
         this(
                 new UnavailableAdminService(),
+                () -> AdminCommandResult.failure("MobRarity admin services are not available."),
                 () -> AdminCommandResult.failure("MobRarity admin services are not available."),
                 name -> Optional.empty(),
                 List::of);
@@ -33,10 +36,12 @@ public final class MobRarityCommand implements CommandExecutor {
     public MobRarityCommand(
             AdminService adminService,
             AdminAction reloadAction,
+            AdminAction validateAction,
             PlayerResolver playerResolver,
             Supplier<List<String>> playerNameSupplier) {
         this.adminService = Objects.requireNonNull(adminService, "adminService");
         this.reloadAction = Objects.requireNonNull(reloadAction, "reloadAction");
+        this.validateAction = Objects.requireNonNull(validateAction, "validateAction");
         this.playerResolver = Objects.requireNonNull(playerResolver, "playerResolver");
         this.playerNameSupplier = Objects.requireNonNull(playerNameSupplier, "playerNameSupplier");
     }
@@ -59,6 +64,8 @@ public final class MobRarityCommand implements CommandExecutor {
 
         AdminCommandResult result = switch (subcommand) {
             case "reload" -> reload(args);
+            case "validate" -> validate(args);
+            case "list" -> list(args);
             case "inspect" -> inspect(sender);
             case "set" -> set(sender, args);
             case "spawn" -> spawn(sender, args);
@@ -74,6 +81,20 @@ public final class MobRarityCommand implements CommandExecutor {
             return AdminCommandResult.failure("/mobrarity reload");
         }
         return reloadAction.run();
+    }
+
+    private AdminCommandResult validate(String[] args) {
+        if (args.length != 1) {
+            return AdminCommandResult.failure("/mobrarity validate");
+        }
+        return validateAction.run();
+    }
+
+    private AdminCommandResult list(String[] args) {
+        if (args.length != 2) {
+            return AdminCommandResult.failure(LIST_USAGE);
+        }
+        return adminService.list(args[1]);
     }
 
     private AdminCommandResult inspect(CommandSender sender) {
@@ -175,6 +196,8 @@ public final class MobRarityCommand implements CommandExecutor {
                 String variantKey,
                 int level);
 
+        AdminCommandResult list(String category);
+
         Map<String, List<String>> completions();
     }
 
@@ -207,6 +230,11 @@ public final class MobRarityCommand implements CommandExecutor {
                 String tierKey,
                 String variantKey,
                 int level) {
+            return unavailable();
+        }
+
+        @Override
+        public AdminCommandResult list(String category) {
             return unavailable();
         }
 

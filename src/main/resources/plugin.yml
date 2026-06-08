@@ -19,12 +19,18 @@ permissions:
     default: op
     children:
       mobrarity.reload: true
+      mobrarity.validate: true
+      mobrarity.list: true
       mobrarity.inspect: true
       mobrarity.set: true
       mobrarity.spawn: true
       mobrarity.clear: true
       mobrarity.bypass.claim-check: true
   mobrarity.reload:
+    default: op
+  mobrarity.validate:
+    default: op
+  mobrarity.list:
     default: op
   mobrarity.inspect:
     default: op
