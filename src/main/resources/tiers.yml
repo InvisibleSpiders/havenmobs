@@ -25,3 +25,12 @@ tiers:
         particle: HAPPY_VILLAGER
         interval-ticks: 40
         count: 3
+    triggers:
+      on_death:
+        chance: 1.0
+        actions:
+          - type: currency_drop
+            amount: 5.0
+          - type: command
+            as: console
+            command: "say %player% defeated a rare %entity_type%"

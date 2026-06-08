@@ -19,7 +19,7 @@ public final class EffectEngine {
             return;
         }
         for (ActionDefinition action : trigger.actions()) {
-            registry.action(action.type()).ifPresent(effectAction -> effectAction.execute(context));
+            registry.action(action.type()).ifPresent(effectAction -> effectAction.execute(action, context));
         }
     }
 }

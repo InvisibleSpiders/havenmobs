@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -41,9 +42,10 @@ public final class MobDeathListener implements Listener {
                 || MobDamageListener.playerSource(damageByEntity.getDamager()).isEmpty()) {
             return;
         }
+        Player player = MobDamageListener.playerSource(damageByEntity.getDamager()).get();
         if (tracker.lastPlayer(entity.getUniqueId(), currentTick.getAsLong()).isEmpty()) {
             return;
         }
-        deathTriggerLookup.apply(entity).ifPresent(trigger -> effectEngine.run(trigger, TriggerContext.empty()));
+        deathTriggerLookup.apply(entity).ifPresent(trigger -> effectEngine.run(trigger, TriggerContext.forEntity(entity, player)));
     }
 }
