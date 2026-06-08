@@ -1,0 +1,51 @@
+# Per-mob rarity settings.
+# Entity keys use Bukkit EntityType names such as ZOMBIE, SHEEP, CREEPER, or SKELETON.
+
+# Spawn sources let you decide where rarity mobs can come from.
+# NATURAL covers ordinary world spawning.
+# SPAWNER covers mob spawner blocks.
+# SPAWN_EGG covers player-used spawn eggs.
+# BREEDING covers child mobs created through breeding.
+# COMMAND covers this plugin's admin spawn command.
+# PLUGIN covers other plugin-created entities when Paper reports plugin spawning.
+# Variants are named special mobs tied to a global tier.
+# Triggers define when configured actions run.
+mobs:
+  SHEEP:
+    spawn-sources:
+      NATURAL: true
+      SPAWNER: false
+      SPAWN_EGG: true
+      BREEDING: true
+      COMMAND: true
+      PLUGIN: true
+    variants:
+      toxic_sheep:
+        tier: rare
+        weight: 2
+        display:
+          nametag: "<green>[Lv %mobrarity_level%] Toxic Sheep</green>"
+        triggers:
+          on_aura_tick:
+            interval-ticks: 40
+            radius: 4.0
+            actions:
+              - type: potion_effect
+                effect: POISON
+                duration-ticks: 80
+                amplifier: 0
+      rare_sheep:
+        tier: rare
+        weight: 3
+        display:
+          nametag: "<aqua>[Lv %mobrarity_level%] Rare Sheep</aqua>"
+        triggers:
+          on_shear:
+            chance: 0.25
+            actions:
+              - type: item_drop
+                material: DIAMOND
+                amount: 1
+              - type: item_drop
+                material: GOLD_NUGGET
+                amount: "2-8"
