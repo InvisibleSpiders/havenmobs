@@ -12,6 +12,8 @@
 - Look at that sheep and run `/mobrarity inspect`; confirm it reports `SHEEP rare/rare_sheep level 3`.
 - Shear that sheep and confirm the Rare Sheep `on_shear` item drop action can drop configured bonus items.
 - Look at that sheep and run `/mobrarity set rare toxic_sheep 4`; confirm it reports the assigned tier, variant, and level.
+- Stand within 4 blocks of the Toxic Sheep for a few seconds and confirm the configured `on_aura_tick` poison effect applies.
+- Damage the Toxic Sheep and confirm the configured `on_damage` actions run without console errors.
 - Kill a tagged rare sheep with direct player damage and confirm the rare tier `on_death` command action runs.
 - Look at that sheep and run `/mobrarity clear`; confirm it removes MobRarity data.
 - Spawn natural or configured sheep if practical and confirm the plugin does not error while assigning rarity metadata.
@@ -23,5 +25,5 @@
 - VaultUnlocked reward verification with a real economy provider.
 - LandClaims blocking Toxic Sheep aura and Rare Sheep shearing rewards.
 - Lava or natural death reward suppression.
-- Toxic Sheep aura tick.
+- Dedicated in-game checks for `on_tame`, `on_breed`, and `on_interact` examples once sample variants are added for tameable/breedable/interactable mobs.
 - Distance-from-spawn level scaling once horizontal distance is passed into `MobLevelService`.

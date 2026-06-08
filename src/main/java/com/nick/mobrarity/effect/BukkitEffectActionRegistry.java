@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -46,7 +47,8 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
                 "item_drop", (action, context) -> dropItem(action, context, random, itemDropper),
                 "potion_effect", (action, context) -> applyPotionEffect(action, context, potionApplier),
                 "currency_drop", (action, context) -> dropCurrency(action, context, economyAdapter),
-                "command", (action, context) -> runCommand(action, context, commandDispatcher));
+                "command", (action, context) -> runCommand(action, context, commandDispatcher),
+                "hostile_target", BukkitEffectActionRegistry::makeHostile);
     }
 
     @Override
@@ -134,6 +136,12 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
             return;
         }
         commandDispatcher.dispatchConsole(command);
+    }
+
+    private static void makeHostile(ActionDefinition action, TriggerContext context) {
+        if (context.entity().orElse(null) instanceof Mob mob && context.player().isPresent()) {
+            mob.setTarget(context.player().get());
+        }
     }
 
     private static String replacePlaceholders(String value, TriggerContext context) {

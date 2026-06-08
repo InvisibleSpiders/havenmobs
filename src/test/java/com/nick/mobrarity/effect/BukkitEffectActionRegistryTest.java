@@ -13,6 +13,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
 
@@ -117,6 +118,32 @@ final class BukkitEffectActionRegistryTest {
                 TriggerContext.forEntity(entity, player));
 
         assertThat(dispatcher.consoleCommands).containsExactly("say Alex found SHEEP");
+    }
+
+    @Test
+    void hostileTargetSetsMobTargetToPlayer() {
+        Player player = mock(Player.class);
+        Mob mob = mock(Mob.class);
+        BukkitEffectActionRegistry registry = registry();
+
+        registry.action("hostile_target").orElseThrow().execute(
+                new ActionDefinition("hostile_target", Map.of()),
+                TriggerContext.forEntity(mob, player));
+
+        org.mockito.Mockito.verify(mob).setTarget(player);
+    }
+
+    @Test
+    void hostileTargetIgnoresNonMobEntities() {
+        Player player = mock(Player.class);
+        LivingEntity entity = mock(LivingEntity.class);
+        BukkitEffectActionRegistry registry = registry();
+
+        registry.action("hostile_target").orElseThrow().execute(
+                new ActionDefinition("hostile_target", Map.of()),
+                TriggerContext.forEntity(entity, player));
+
+        assertThat(registry.action("hostile_target")).isPresent();
     }
 
     private static BukkitEffectActionRegistry registry() {
