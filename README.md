@@ -26,11 +26,11 @@ Base command: `/mobrarity` with aliases `/mr` and `/mobr`.
 | `/mobrarity validate` | `mobrarity.validate` | Parses `tiers.yml` and `mobs.yml` and reports whether they are valid without applying changes. |
 | `/mobrarity list tiers` | `mobrarity.list` | Lists configured global rarity tiers. |
 | `/mobrarity list variants` | `mobrarity.list` | Lists configured mob variant keys. |
-| `/mobrarity list mobs` | `mobrarity.list` | Lists mob types that have MobRarity profiles. |
+| `/mobrarity list mobs` | `mobrarity.list` | Lists mob types with MobRarity profiles. |
 | `/mobrarity inspect` | `mobrarity.inspect` | Inspects the living mob in the player's crosshair and reports its MobRarity data. |
-| `/mobrarity set <tier> <variant> [level]` | `mobrarity.set` | Assigns configured MobRarity data to the targeted living mob. |
+| `/mobrarity set &lt;tier&gt; &lt;variant&gt; [level]` | `mobrarity.set` | Assigns configured MobRarity data to the targeted living mob. |
 | `/mobrarity clear` | `mobrarity.clear` | Removes MobRarity data from the targeted living mob. |
-| `/mobrarity spawn <entity> <tier> <variant> [level] [player]` | `mobrarity.spawn` | Spawns and tags a configured mob on the sender or named online player. |
+| `/mobrarity spawn &lt;entity&gt; &lt;tier&gt; &lt;variant&gt; [level] [player]` | `mobrarity.spawn` | Spawns and tags a configured mob on the sender or named online player. |
 
 `mobrarity.admin` grants all admin command permissions and the claim-check bypass permission.
 
