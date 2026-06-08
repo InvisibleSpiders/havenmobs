@@ -16,6 +16,8 @@
 # - currency_drop: amount deposited through VaultUnlocked/Vault economy when available.
 # - command: command text, optional as: console|player, supports %player% and %entity_type%.
 # - hostile_target: makes a Mob target the triggering player when the entity supports targeting.
+# Any action can set claim-action to choose the LandClaims flag checked before it runs.
+# By default, hostile_target checks mob_griefing and other actions check their action type.
 mobs:
   SHEEP:
     spawn-sources:
@@ -44,6 +46,7 @@ mobs:
             chance: 1.0
             actions:
               - type: hostile_target
+                claim-action: mob_griefing
               - type: potion_effect
                 effect: POISON
                 duration-ticks: 60

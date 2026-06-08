@@ -1,17 +1,16 @@
 package com.nick.mobrarity.integration;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import com.nick.landclaims.api.LandClaimsApi;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 public final class LandClaimsProtectionAdapter implements ProtectionAdapter {
     private static final String BYPASS_PERMISSION = "mobrarity.bypass.claim-check";
 
-    private final Object landClaimsApi;
+    private final LandClaimsApi landClaimsApi;
     private final ProtectionFallbackPolicy fallbackPolicy;
 
-    public LandClaimsProtectionAdapter(Object landClaimsApi, ProtectionFallbackPolicy fallbackPolicy) {
+    public LandClaimsProtectionAdapter(LandClaimsApi landClaimsApi, ProtectionFallbackPolicy fallbackPolicy) {
         this.landClaimsApi = landClaimsApi;
         this.fallbackPolicy = fallbackPolicy;
     }
@@ -26,10 +25,8 @@ public final class LandClaimsProtectionAdapter implements ProtectionAdapter {
         }
 
         try {
-            Method method = landClaimsApi.getClass().getMethod("canInteract", Player.class, Location.class, String.class);
-            Object result = method.invoke(landClaimsApi, player, location, actionKey);
-            return Boolean.TRUE.equals(result);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | RuntimeException e) {
+            return landClaimsApi.canInteract(player, location, actionKey);
+        } catch (RuntimeException e) {
             return fallbackPolicy.allowsMissingService(actionType);
         }
     }
