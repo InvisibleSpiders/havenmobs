@@ -13,7 +13,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 public final class MobRarityCommand implements CommandExecutor {
-    static final String USAGE = "/mobrarity reload|validate|list|inspect|set|spawn|clear";
+    static final String USAGE = "/mobrarity reload|validate|list|inspect|debug|set|spawn|clear";
     private static final String LIST_USAGE = "/mobrarity list <tiers|variants|mobs>";
     private static final String SET_USAGE = "/mobrarity set <tier> <variant> [level]";
     private static final String SPAWN_USAGE = "/mobrarity spawn <entity> <tier> <variant> [level] [player]";
@@ -67,6 +67,7 @@ public final class MobRarityCommand implements CommandExecutor {
             case "validate" -> validate(args);
             case "list" -> list(args);
             case "inspect" -> inspect(sender);
+            case "debug" -> debug(sender);
             case "set" -> set(sender, args);
             case "spawn" -> spawn(sender, args);
             case "clear" -> clear(sender);
@@ -100,6 +101,11 @@ public final class MobRarityCommand implements CommandExecutor {
     private AdminCommandResult inspect(CommandSender sender) {
         return asPlayer(sender).map(adminService::inspect)
                 .orElseGet(() -> AdminCommandResult.failure("Only players can inspect targeted mobs."));
+    }
+
+    private AdminCommandResult debug(CommandSender sender) {
+        return asPlayer(sender).map(adminService::debug)
+                .orElseGet(() -> AdminCommandResult.failure("Only players can debug targeted mobs."));
     }
 
     private AdminCommandResult set(CommandSender sender, String[] args) {
@@ -184,6 +190,8 @@ public final class MobRarityCommand implements CommandExecutor {
     public interface AdminService {
         AdminCommandResult inspect(Player player);
 
+        AdminCommandResult debug(Player player);
+
         AdminCommandResult set(Player player, String tierKey, String variantKey, int level);
 
         AdminCommandResult clear(Player player);
@@ -209,6 +217,11 @@ public final class MobRarityCommand implements CommandExecutor {
     private static final class UnavailableAdminService implements AdminService {
         @Override
         public AdminCommandResult inspect(Player player) {
+            return unavailable();
+        }
+
+        @Override
+        public AdminCommandResult debug(Player player) {
             return unavailable();
         }
 

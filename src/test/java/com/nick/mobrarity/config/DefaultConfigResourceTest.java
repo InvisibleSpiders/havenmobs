@@ -14,6 +14,18 @@ final class DefaultConfigResourceTest {
         assertCommented("mobs.yml", "mobs:");
     }
 
+    @Test
+    void pluginYamlIncludesDebugPermission() throws Exception {
+        try (InputStream stream = DefaultConfigResourceTest.class.getClassLoader().getResourceAsStream("plugin.yml")) {
+            assertThat(stream).isNotNull();
+            String text = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+
+            assertThat(text)
+                    .contains("mobrarity.debug:")
+                    .contains("mobrarity.debug: true");
+        }
+    }
+
     private static void assertCommented(String resourceName, String requiredSection) throws Exception {
         try (InputStream stream = DefaultConfigResourceTest.class.getClassLoader().getResourceAsStream(resourceName)) {
             assertThat(stream).as(resourceName).isNotNull();

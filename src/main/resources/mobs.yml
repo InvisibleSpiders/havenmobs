@@ -10,15 +10,21 @@
 # PLUGIN covers other plugin-created entities when Paper reports plugin spawning.
 # Variants are named special mobs tied to a global tier.
 # A variant key should not contain "|"; the plugin uses that internally for mob data.
-# variant.weight controls how often that variant is picked for this mob type.
+# variant.weight controls how often that variant is picked for this mob type
+# after a tier has been selected.
 # variant.tier must match a key from tiers.yml.
 # variant.stats can add to tier stats for this specific mob variant.
+# Stat keys support max-health, attack-damage, movement-speed, armor,
+# armor-toughness, knockback-resistance, and follow-range.
 # display.nametag overrides the tier nametag for this specific variant.
 # Nametags can use %mobrarity_tier%, %mobrarity_variant%, %mobrarity_level%,
 # %mobrarity_entity%, and their *_key variants.
 # Triggers define when configured actions run.
 # Trigger chance is checked before its actions run; omit chance for 1.0.
-# on_aura_tick uses interval-ticks and radius to run effects near the mob.
+# on_aura_tick uses interval-ticks and radius to run effects near the mob,
+# filtered through claim checks for each nearby player.
+# Use /mobrarity debug while targeting a mob to inspect its rarity data,
+# configured variants, tier weights, and spawn-source settings.
 # Supported actions in this chunk:
 # - item_drop: material + amount, where amount can be a number or "min-max".
 # - potion_effect: effect + duration-ticks + amplifier, target defaults to the player.
