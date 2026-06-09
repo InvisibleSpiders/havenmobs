@@ -28,6 +28,8 @@
 # - heal or damage: amount, target defaults to player and can be mob.
 # - knockback: strength, optional y, target defaults to player and can be mob.
 # - lightning_effect: visual lightning at the mob without lightning damage.
+# - particle: particle + count, with optional offset-x/y/z and extra.
+# - sound: sound + optional volume and pitch.
 # - hostile_target: makes a Mob target the triggering player when the entity supports targeting.
 # Any action can set claim-action to choose the LandClaims flag checked before it runs.
 # By default, hostile_target checks mob_griefing and other actions check their action type.
@@ -55,6 +57,12 @@ mobs:
             interval-ticks: 40
             radius: 4.0
             actions:
+              - type: particle
+                particle: HAPPY_VILLAGER
+                count: 6
+                offset-x: 0.3
+                offset-y: 0.5
+                offset-z: 0.3
               - type: potion_effect
                 effect: POISON
                 duration-ticks: 80
@@ -80,6 +88,10 @@ mobs:
           on_shear:
             chance: 0.25
             actions:
+              - type: sound
+                sound: ENTITY_PLAYER_LEVELUP
+                volume: 0.7
+                pitch: 1.4
               - type: item_drop
                 material: DIAMOND
                 amount: 1
