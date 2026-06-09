@@ -61,9 +61,10 @@ final class ConfigServiceTest {
 
         assertThat(rareSheep.triggers()).containsKey("on_shear");
         assertThat(rareSheep.triggers().get("on_shear").chance()).isEqualTo(0.25);
-        assertThat(rareSheep.triggers().get("on_shear").actions()).hasSize(2);
-        assertThat(rareSheep.triggers().get("on_shear").actions().getFirst().type()).isEqualTo("item_drop");
-        assertThat(rareSheep.triggers().get("on_shear").actions().getFirst().values()).containsEntry("material", "DIAMOND");
+        assertThat(rareSheep.triggers().get("on_shear").actions()).hasSize(3);
+        assertThat(rareSheep.triggers().get("on_shear").actions().get(0).type()).isEqualTo("sound");
+        assertThat(rareSheep.triggers().get("on_shear").actions().get(1).type()).isEqualTo("item_drop");
+        assertThat(rareSheep.triggers().get("on_shear").actions().get(1).values()).containsEntry("material", "DIAMOND");
     }
 
     @Test

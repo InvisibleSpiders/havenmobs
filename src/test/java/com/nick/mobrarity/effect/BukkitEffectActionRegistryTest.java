@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.random.RandomGenerator;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
@@ -247,6 +248,60 @@ final class BukkitEffectActionRegistryTest {
 
         assertThat(worldEffects.world).isSameAs(world);
         assertThat(worldEffects.location).isSameAs(location);
+    }
+
+    @Test
+    void particleEffectSpawnsConfiguredParticleAtEntityLocation() {
+        LivingEntity entity = mock(LivingEntity.class);
+        Location location = mock(Location.class);
+        World world = mock(World.class);
+        RecordingWorldEffects worldEffects = new RecordingWorldEffects();
+        when(entity.getLocation()).thenReturn(location);
+        when(location.getWorld()).thenReturn(world);
+        BukkitEffectActionRegistry registry = registry(worldEffects);
+
+        registry.action("particle").orElseThrow().execute(
+                new ActionDefinition("particle", Map.of(
+                        "particle", "HAPPY_VILLAGER",
+                        "count", 8,
+                        "offset-x", 0.2,
+                        "offset-y", 0.5,
+                        "offset-z", 0.2,
+                        "extra", 0.01)),
+                TriggerContext.forEntity(entity, mock(Player.class)));
+
+        assertThat(worldEffects.world).isSameAs(world);
+        assertThat(worldEffects.location).isSameAs(location);
+        assertThat(worldEffects.particle).isEqualTo(Particle.HAPPY_VILLAGER);
+        assertThat(worldEffects.count).isEqualTo(8);
+        assertThat(worldEffects.offsetX).isEqualTo(0.2);
+        assertThat(worldEffects.offsetY).isEqualTo(0.5);
+        assertThat(worldEffects.offsetZ).isEqualTo(0.2);
+        assertThat(worldEffects.extra).isEqualTo(0.01);
+    }
+
+    @Test
+    void soundEffectPlaysConfiguredSoundAtEntityLocation() {
+        LivingEntity entity = mock(LivingEntity.class);
+        Location location = mock(Location.class);
+        World world = mock(World.class);
+        RecordingWorldEffects worldEffects = new RecordingWorldEffects();
+        when(entity.getLocation()).thenReturn(location);
+        when(location.getWorld()).thenReturn(world);
+        BukkitEffectActionRegistry registry = registry(worldEffects);
+
+        registry.action("sound").orElseThrow().execute(
+                new ActionDefinition("sound", Map.of(
+                        "sound", "ENTITY_PLAYER_LEVELUP",
+                        "volume", 0.8,
+                        "pitch", 1.2)),
+                TriggerContext.forEntity(entity, mock(Player.class)));
+
+        assertThat(worldEffects.world).isSameAs(world);
+        assertThat(worldEffects.location).isSameAs(location);
+        assertThat(worldEffects.sound).isEqualTo("ENTITY_PLAYER_LEVELUP");
+        assertThat(worldEffects.volume).isEqualTo(0.8f);
+        assertThat(worldEffects.pitch).isEqualTo(1.2f);
     }
 
     @Test
@@ -490,11 +545,49 @@ final class BukkitEffectActionRegistryTest {
     private static final class RecordingWorldEffects implements BukkitEffectActionRegistry.WorldEffects {
         private World world;
         private Location location;
+        private Particle particle;
+        private int count;
+        private double offsetX;
+        private double offsetY;
+        private double offsetZ;
+        private double extra;
+        private String sound;
+        private float volume;
+        private float pitch;
 
         @Override
         public void strikeLightningEffect(World world, Location location) {
             this.world = world;
             this.location = location;
+        }
+
+        @Override
+        public void spawnParticle(
+                World world,
+                Location location,
+                Particle particle,
+                int count,
+                double offsetX,
+                double offsetY,
+                double offsetZ,
+                double extra) {
+            this.world = world;
+            this.location = location;
+            this.particle = particle;
+            this.count = count;
+            this.offsetX = offsetX;
+            this.offsetY = offsetY;
+            this.offsetZ = offsetZ;
+            this.extra = extra;
+        }
+
+        @Override
+        public void playSound(World world, Location location, String sound, float volume, float pitch) {
+            this.world = world;
+            this.location = location;
+            this.sound = sound;
+            this.volume = volume;
+            this.pitch = pitch;
         }
     }
 

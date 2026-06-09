@@ -9,6 +9,7 @@ import java.util.random.RandomGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.EntityType;
@@ -86,6 +87,8 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
                 Map.entry("damage", (action, context) -> damage(action, context, damageDealer)),
                 Map.entry("knockback", (action, context) -> knockback(action, context, velocityApplier)),
                 Map.entry("lightning_effect", (action, context) -> strikeLightningEffect(context, worldEffects)),
+                Map.entry("particle", (action, context) -> spawnParticle(action, context, worldEffects)),
+                Map.entry("sound", (action, context) -> playSound(action, context, worldEffects)),
                 Map.entry("hostile_target", BukkitEffectActionRegistry::makeHostile));
     }
 
@@ -251,6 +254,60 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
         }
     }
 
+    private static void spawnParticle(ActionDefinition action, TriggerContext context, WorldEffects worldEffects) {
+        Optional<LivingEntity> entity = context.entity();
+        Optional<String> particleName = stringValue(action.values().get("particle"));
+        if (entity.isEmpty() || particleName.isEmpty()) {
+            return;
+        }
+        Particle particle;
+        try {
+            particle = Particle.valueOf(particleName.get().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            return;
+        }
+
+        int count = integer(action.values().getOrDefault("count", 1)).orElse(1);
+        double offsetX = decimal(action.values().getOrDefault("offset-x", 0.0)).orElse(0.0);
+        double offsetY = decimal(action.values().getOrDefault("offset-y", 0.0)).orElse(0.0);
+        double offsetZ = decimal(action.values().getOrDefault("offset-z", 0.0)).orElse(0.0);
+        double extra = decimal(action.values().getOrDefault("extra", 0.0)).orElse(0.0);
+        if (count < 1 || !Double.isFinite(offsetX) || !Double.isFinite(offsetY)
+                || !Double.isFinite(offsetZ) || !Double.isFinite(extra)) {
+            return;
+        }
+
+        Location location = entity.get().getLocation();
+        World world = location.getWorld();
+        if (world != null) {
+            worldEffects.spawnParticle(world, location, particle, count, offsetX, offsetY, offsetZ, extra);
+        }
+    }
+
+    private static void playSound(ActionDefinition action, TriggerContext context, WorldEffects worldEffects) {
+        Optional<LivingEntity> entity = context.entity();
+        Optional<String> soundName = stringValue(action.values().get("sound"));
+        if (entity.isEmpty() || soundName.isEmpty()) {
+            return;
+        }
+        String sound = soundName.get();
+        if (sound.isBlank()) {
+            return;
+        }
+
+        double volume = decimal(action.values().getOrDefault("volume", 1.0)).orElse(1.0);
+        double pitch = decimal(action.values().getOrDefault("pitch", 1.0)).orElse(1.0);
+        if (volume < 0 || pitch < 0 || !Double.isFinite(volume) || !Double.isFinite(pitch)) {
+            return;
+        }
+
+        Location location = entity.get().getLocation();
+        World world = location.getWorld();
+        if (world != null) {
+            worldEffects.playSound(world, location, sound, (float) volume, (float) pitch);
+        }
+    }
+
     private static void makeHostile(ActionDefinition action, TriggerContext context) {
         if (context.entity().orElse(null) instanceof Mob mob && context.player().isPresent()) {
             mob.setTarget(context.player().get());
@@ -378,6 +435,18 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
 
     interface WorldEffects {
         void strikeLightningEffect(World world, Location location);
+
+        void spawnParticle(
+                World world,
+                Location location,
+                Particle particle,
+                int count,
+                double offsetX,
+                double offsetY,
+                double offsetZ,
+                double extra);
+
+        void playSound(World world, Location location, String sound, float volume, float pitch);
     }
 
     private static final class BukkitCommandDispatcher implements CommandDispatcher {
@@ -456,6 +525,24 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
         @Override
         public void strikeLightningEffect(World world, Location location) {
             world.strikeLightningEffect(location);
+        }
+
+        @Override
+        public void spawnParticle(
+                World world,
+                Location location,
+                Particle particle,
+                int count,
+                double offsetX,
+                double offsetY,
+                double offsetZ,
+                double extra) {
+            world.spawnParticle(particle, location, count, offsetX, offsetY, offsetZ, extra);
+        }
+
+        @Override
+        public void playSound(World world, Location location, String sound, float volume, float pitch) {
+            world.playSound(location, sound, volume, pitch);
         }
     }
 }

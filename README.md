@@ -59,6 +59,8 @@ Configured triggers currently support:
 - `heal` and `damage` with `amount` and optional `target`.
 - `knockback` with `strength`, optional `y`, and optional `target`.
 - `lightning_effect`, which shows lightning without dealing lightning damage.
+- `particle` with `particle`, `count`, optional `offset-x`, `offset-y`, `offset-z`, and `extra`.
+- `sound` with `sound`, optional `volume`, and optional `pitch`.
 - `hostile_target`, which makes a Bukkit `Mob` target the triggering player.
 
 ## Placeholders
