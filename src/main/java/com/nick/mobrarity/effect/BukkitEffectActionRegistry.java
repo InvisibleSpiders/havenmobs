@@ -5,10 +5,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.EntityType;
@@ -17,6 +19,8 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.loot.LootContext;
+import org.bukkit.loot.LootTable;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
@@ -51,7 +55,46 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
                 new BukkitHealthEditor(),
                 new BukkitDamageDealer(),
                 new BukkitVelocityApplier(),
-                new BukkitWorldEffects());
+                new BukkitWorldEffects(),
+                new BukkitLootTableDropper());
+    }
+
+    BukkitEffectActionRegistry(
+            EconomyAdapter economyAdapter,
+            RandomGenerator random,
+            CommandDispatcher commandDispatcher,
+            ItemDropper itemDropper,
+            PotionApplier potionApplier,
+            ExperienceDropper experienceDropper,
+            HealthEditor healthEditor,
+            DamageDealer damageDealer,
+            VelocityApplier velocityApplier,
+            WorldEffects worldEffects,
+            LootTableDropper lootTableDropper) {
+        Objects.requireNonNull(economyAdapter, "economyAdapter");
+        Objects.requireNonNull(random, "random");
+        Objects.requireNonNull(commandDispatcher, "commandDispatcher");
+        Objects.requireNonNull(itemDropper, "itemDropper");
+        Objects.requireNonNull(potionApplier, "potionApplier");
+        Objects.requireNonNull(experienceDropper, "experienceDropper");
+        Objects.requireNonNull(healthEditor, "healthEditor");
+        Objects.requireNonNull(damageDealer, "damageDealer");
+        Objects.requireNonNull(velocityApplier, "velocityApplier");
+        Objects.requireNonNull(worldEffects, "worldEffects");
+        Objects.requireNonNull(lootTableDropper, "lootTableDropper");
+        this.actions = Map.ofEntries(
+                Map.entry("item_drop", (action, context) -> dropItem(action, context, random, itemDropper)),
+                Map.entry("potion_effect", (action, context) -> applyPotionEffect(action, context, potionApplier)),
+                Map.entry("currency_drop", (action, context) -> dropCurrency(action, context, economyAdapter)),
+                Map.entry("loot_table", (action, context) -> dropLootTable(action, context, lootTableDropper)),
+                Map.entry("console_command", (action, context) -> runCommand(action, context, commandDispatcher, "console")),
+                Map.entry("player_command", (action, context) -> runCommand(action, context, commandDispatcher, "player")),
+                Map.entry("xp_drop", (action, context) -> dropExperience(action, context, random, experienceDropper)),
+                Map.entry("heal", (action, context) -> heal(action, context, healthEditor)),
+                Map.entry("damage", (action, context) -> damage(action, context, damageDealer)),
+                Map.entry("knockback", (action, context) -> knockback(action, context, velocityApplier)),
+                Map.entry("lightning_effect", (action, context) -> strikeLightningEffect(context, worldEffects)),
+                Map.entry("hostile_target", BukkitEffectActionRegistry::makeHostile));
     }
 
     BukkitEffectActionRegistry(
@@ -65,28 +108,18 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
             DamageDealer damageDealer,
             VelocityApplier velocityApplier,
             WorldEffects worldEffects) {
-        Objects.requireNonNull(economyAdapter, "economyAdapter");
-        Objects.requireNonNull(random, "random");
-        Objects.requireNonNull(commandDispatcher, "commandDispatcher");
-        Objects.requireNonNull(itemDropper, "itemDropper");
-        Objects.requireNonNull(potionApplier, "potionApplier");
-        Objects.requireNonNull(experienceDropper, "experienceDropper");
-        Objects.requireNonNull(healthEditor, "healthEditor");
-        Objects.requireNonNull(damageDealer, "damageDealer");
-        Objects.requireNonNull(velocityApplier, "velocityApplier");
-        Objects.requireNonNull(worldEffects, "worldEffects");
-        this.actions = Map.ofEntries(
-                Map.entry("item_drop", (action, context) -> dropItem(action, context, random, itemDropper)),
-                Map.entry("potion_effect", (action, context) -> applyPotionEffect(action, context, potionApplier)),
-                Map.entry("currency_drop", (action, context) -> dropCurrency(action, context, economyAdapter)),
-                Map.entry("console_command", (action, context) -> runCommand(action, context, commandDispatcher, "console")),
-                Map.entry("player_command", (action, context) -> runCommand(action, context, commandDispatcher, "player")),
-                Map.entry("xp_drop", (action, context) -> dropExperience(action, context, random, experienceDropper)),
-                Map.entry("heal", (action, context) -> heal(action, context, healthEditor)),
-                Map.entry("damage", (action, context) -> damage(action, context, damageDealer)),
-                Map.entry("knockback", (action, context) -> knockback(action, context, velocityApplier)),
-                Map.entry("lightning_effect", (action, context) -> strikeLightningEffect(context, worldEffects)),
-                Map.entry("hostile_target", BukkitEffectActionRegistry::makeHostile));
+        this(
+                economyAdapter,
+                random,
+                commandDispatcher,
+                itemDropper,
+                potionApplier,
+                experienceDropper,
+                healthEditor,
+                damageDealer,
+                velocityApplier,
+                worldEffects,
+                new BukkitLootTableDropper());
     }
 
     @Override
@@ -193,6 +226,27 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
         }
     }
 
+    private static void dropLootTable(
+            ActionDefinition action,
+            TriggerContext context,
+            LootTableDropper lootTableDropper) {
+        Optional<LivingEntity> entity = context.entity();
+        Optional<NamespacedKey> tableKey = namespacedKey(action.values().get("table"));
+        if (entity.isEmpty() || tableKey.isEmpty()) {
+            return;
+        }
+
+        int rolls = integer(action.values().getOrDefault("rolls", 1)).orElse(1);
+        if (rolls < 1) {
+            return;
+        }
+
+        Location location = entity.get().getLocation();
+        if (location.getWorld() != null) {
+            lootTableDropper.drop(location, tableKey.get(), entity.get(), context.player().orElse(null), rolls);
+        }
+    }
+
     private static void heal(
             ActionDefinition action,
             TriggerContext context,
@@ -290,6 +344,14 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
         });
     }
 
+    private static Optional<NamespacedKey> namespacedKey(Object value) {
+        Optional<String> text = stringValue(value);
+        if (text.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(NamespacedKey.fromString(text.get()));
+    }
+
     private static int amount(Object value, RandomGenerator random) {
         Optional<Integer> direct = integer(value);
         if (direct.isPresent()) {
@@ -380,6 +442,10 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
         void strikeLightningEffect(World world, Location location);
     }
 
+    interface LootTableDropper {
+        void drop(Location location, NamespacedKey tableKey, LivingEntity entity, Player player, int rolls);
+    }
+
     private static final class BukkitCommandDispatcher implements CommandDispatcher {
         @Override
         public void dispatchConsole(String command) {
@@ -456,6 +522,28 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
         @Override
         public void strikeLightningEffect(World world, Location location) {
             world.strikeLightningEffect(location);
+        }
+    }
+
+    private static final class BukkitLootTableDropper implements LootTableDropper {
+        @Override
+        public void drop(Location location, NamespacedKey tableKey, LivingEntity entity, Player player, int rolls) {
+            LootTable lootTable = Bukkit.getLootTable(tableKey);
+            if (lootTable == null || location.getWorld() == null) {
+                return;
+            }
+
+            LootContext.Builder contextBuilder = new LootContext.Builder(location)
+                    .lootedEntity(entity);
+            if (player != null) {
+                contextBuilder.killer(player);
+            }
+            LootContext lootContext = contextBuilder.build();
+            for (int roll = 0; roll < rolls; roll++) {
+                for (ItemStack item : lootTable.populateLoot(ThreadLocalRandom.current(), lootContext)) {
+                    location.getWorld().dropItemNaturally(location, item);
+                }
+            }
         }
     }
 }
