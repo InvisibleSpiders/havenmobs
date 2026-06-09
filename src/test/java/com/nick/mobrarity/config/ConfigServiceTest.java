@@ -101,6 +101,14 @@ final class ConfigServiceTest {
     }
 
     @Test
+    void loadsTierNametagTemplate() {
+        ConfigService service = ConfigService.fromResources();
+
+        assertThat(service.snapshot().tiers().get("rare").nametag())
+                .isEqualTo("<aqua>[Lv %mobrarity_level%] %mobrarity_variant%</aqua>");
+    }
+
+    @Test
     void reportsUnknownTierReference() {
         ValidationResult result = ConfigService.validateVariantTier("missing", java.util.Set.of("rare"));
 

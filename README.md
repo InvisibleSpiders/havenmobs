@@ -71,6 +71,14 @@ PlaceholderAPI exposes the same values for the player's targeted rarity mob.
 - `%mobrarity_level%`: mob level.
 - `%mobrarity_entity%`: mob type, such as `Sheep`.
 
+## Visuals
+
+Tier `display.nametag` templates apply to tagged mobs unless a variant overrides
+the template with its own `display.nametag`. Nametags support MiniMessage and the
+built-in `%mobrarity_*%` placeholders. The current runtime applies targeted
+nametags by default, so the custom name is present but not forced visible at all
+times.
+
 ## Stat Scaling
 
 Tier and variant stats stack when a mob receives MobRarity data.

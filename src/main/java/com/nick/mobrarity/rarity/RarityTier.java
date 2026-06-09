@@ -8,6 +8,7 @@ public record RarityTier(
         String key,
         double weight,
         String displayName,
+        String nametag,
         Map<String, StatModifier> stats,
         Map<String, TriggerDefinition> triggers) {
     public RarityTier {
@@ -15,7 +16,16 @@ public record RarityTier(
         triggers = Map.copyOf(triggers);
     }
 
+    public RarityTier(
+            String key,
+            double weight,
+            String displayName,
+            Map<String, StatModifier> stats,
+            Map<String, TriggerDefinition> triggers) {
+        this(key, weight, displayName, null, stats, triggers);
+    }
+
     public RarityTier(String key, double weight, String displayName, Map<String, TriggerDefinition> triggers) {
-        this(key, weight, displayName, Map.of(), triggers);
+        this(key, weight, displayName, null, Map.of(), triggers);
     }
 }
