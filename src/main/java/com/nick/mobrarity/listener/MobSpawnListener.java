@@ -8,6 +8,8 @@ import com.nick.mobrarity.rarity.SpawnRarityService;
 import com.nick.mobrarity.tag.MobRarityData;
 import com.nick.mobrarity.tag.MobTagService;
 import com.nick.mobrarity.stat.StatScalingService;
+import com.nick.mobrarity.visual.DisplayMode;
+import com.nick.mobrarity.visual.VisualService;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -24,13 +26,14 @@ public final class MobSpawnListener implements Listener {
     private final MobLevelService mobLevelService;
     private final MobTagService mobTagService;
     private final StatScalingService statScalingService;
+    private final VisualService visualService;
 
     public MobSpawnListener(
             Map<EntityType, MobProfile> mobProfiles,
             SpawnRarityService spawnRarityService,
             MobLevelService mobLevelService,
             MobTagService mobTagService) {
-        this(() -> new ConfigSnapshot(Map.of(), Map.copyOf(mobProfiles)), spawnRarityService, mobLevelService, mobTagService, null);
+        this(() -> new ConfigSnapshot(Map.of(), Map.copyOf(mobProfiles)), spawnRarityService, mobLevelService, mobTagService, null, null);
     }
 
     public MobSpawnListener(
@@ -39,11 +42,22 @@ public final class MobSpawnListener implements Listener {
             MobLevelService mobLevelService,
             MobTagService mobTagService,
             StatScalingService statScalingService) {
+        this(configSupplier, spawnRarityService, mobLevelService, mobTagService, statScalingService, null);
+    }
+
+    public MobSpawnListener(
+            Supplier<ConfigSnapshot> configSupplier,
+            SpawnRarityService spawnRarityService,
+            MobLevelService mobLevelService,
+            MobTagService mobTagService,
+            StatScalingService statScalingService,
+            VisualService visualService) {
         this.configSupplier = configSupplier;
         this.spawnRarityService = spawnRarityService;
         this.mobLevelService = mobLevelService;
         this.mobTagService = mobTagService;
         this.statScalingService = statScalingService;
+        this.visualService = visualService;
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -57,6 +71,7 @@ public final class MobSpawnListener implements Listener {
                 data -> {
                     mobTagService.tag(event.getEntity(), data);
                     applyScaling(config, event.getEntity(), data);
+                    applyVisuals(config, event.getEntity(), data);
                 });
     }
 
@@ -93,6 +108,12 @@ public final class MobSpawnListener implements Listener {
     private void applyScaling(ConfigSnapshot config, org.bukkit.entity.LivingEntity entity, MobRarityData data) {
         if (statScalingService != null) {
             statScalingService.apply(config, entity, data);
+        }
+    }
+
+    private void applyVisuals(ConfigSnapshot config, org.bukkit.entity.LivingEntity entity, MobRarityData data) {
+        if (visualService != null) {
+            visualService.applyNametag(config, entity, data, DisplayMode.TARGETED);
         }
     }
 

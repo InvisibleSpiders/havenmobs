@@ -102,6 +102,7 @@ public final class ConfigService {
                     key,
                     section.getDouble("weight", 1.0),
                     section.getString("display-name"),
+                    section.getString("display.nametag"),
                     parseStats(optionalChildSection(section, "stats", tierPath + ".stats", resourceName), tierPath + ".stats", resourceName),
                     parseTriggers(optionalChildSection(section, "triggers", tierPath + ".triggers", resourceName), tierPath + ".triggers", resourceName)));
         }

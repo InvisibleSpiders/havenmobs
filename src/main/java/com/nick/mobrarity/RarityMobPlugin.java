@@ -20,6 +20,7 @@ import com.nick.mobrarity.integration.MobRarityPlaceholderExpansion;
 import com.nick.mobrarity.integration.NoEconomyAdapter;
 import com.nick.mobrarity.integration.ProtectionAdapter;
 import com.nick.mobrarity.integration.ProtectionFallbackPolicy;
+import com.nick.mobrarity.integration.TextPlaceholderService;
 import com.nick.mobrarity.integration.VaultUnlockedEconomyAdapter;
 import com.nick.mobrarity.level.LevelSettings;
 import com.nick.mobrarity.level.MobLevelService;
@@ -35,6 +36,8 @@ import com.nick.mobrarity.stat.BukkitStatAttributeAccessor;
 import com.nick.mobrarity.stat.BukkitStatBaselineStore;
 import com.nick.mobrarity.stat.StatScalingService;
 import com.nick.mobrarity.tag.MobTagService;
+import com.nick.mobrarity.visual.MobTextFormatter;
+import com.nick.mobrarity.visual.VisualService;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +68,8 @@ public final class RarityMobPlugin extends JavaPlugin {
         MobLevelService mobLevelService = new MobLevelService(levelSettings);
         MobTagService mobTagService = new MobTagService(this);
         registerPlaceholderExpansion(runtimeConfig, mobTagService);
+        VisualService visualService = new VisualService(
+                new MobTextFormatter(new TextPlaceholderService(isPlaceholderApiEnabled())));
         StatScalingService statScalingService = new StatScalingService(
                 new BukkitStatAttributeAccessor(),
                 new BukkitStatBaselineStore(this));
@@ -95,7 +100,13 @@ public final class RarityMobPlugin extends JavaPlugin {
                 20L);
 
         getServer().getPluginManager().registerEvents(
-                new MobSpawnListener(runtimeConfig::get, spawnRarityService, mobLevelService, mobTagService, statScalingService),
+                new MobSpawnListener(
+                        runtimeConfig::get,
+                        spawnRarityService,
+                        mobLevelService,
+                        mobTagService,
+                        statScalingService,
+                        visualService),
                 this);
         getServer().getPluginManager().registerEvents(
                 new MobDamageListener(playerDamageTracker, Bukkit::getCurrentTick, effectEngine, triggerService::trigger),
@@ -115,7 +126,8 @@ public final class RarityMobPlugin extends JavaPlugin {
                     runtimeConfig::get,
                     mobTagService,
                     new BukkitTargetResolver(16),
-                    statScalingService);
+                    statScalingService,
+                    visualService);
             mobRarityCommand.setExecutor(new MobRarityCommand(
                     adminService,
                     () -> reloadRuntimeConfig(dataFolder, runtimeConfig),
@@ -192,7 +204,7 @@ public final class RarityMobPlugin extends JavaPlugin {
     private void registerPlaceholderExpansion(
             AtomicReference<ConfigSnapshot> runtimeConfig,
             MobTagService mobTagService) {
-        if (!getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+        if (!isPlaceholderApiEnabled()) {
             return;
         }
         new MobRarityPlaceholderExpansion(
@@ -201,6 +213,10 @@ public final class RarityMobPlugin extends JavaPlugin {
                 new BukkitTargetResolver(32),
                 getPluginMeta().getVersion())
                 .register();
+    }
+
+    private boolean isPlaceholderApiEnabled() {
+        return getServer().getPluginManager().isPluginEnabled("PlaceholderAPI");
     }
 
     private ProtectionAdapter loadProtectionAdapter() {
