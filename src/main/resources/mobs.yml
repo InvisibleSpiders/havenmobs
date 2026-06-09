@@ -29,6 +29,7 @@
 # - item_drop: material + amount, where amount can be a number or "min-max".
 # - potion_effect: effect + duration-ticks + amplifier, target defaults to the player.
 # - currency_drop: amount deposited through VaultUnlocked/Vault economy when available.
+# - loot_table: table + optional rolls; drops items from a vanilla/datapack loot table.
 # - console_command or player_command: command text with placeholders.
 # - xp_drop: amount of experience to drop at the mob.
 # - heal or damage: amount, target defaults to player and can be mob.
@@ -92,3 +93,6 @@ mobs:
               - type: item_drop
                 material: GOLD_NUGGET
                 amount: "2-8"
+              - type: loot_table
+                table: minecraft:entities/sheep
+                rolls: 1

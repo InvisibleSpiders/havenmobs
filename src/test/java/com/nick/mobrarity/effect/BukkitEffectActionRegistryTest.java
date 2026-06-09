@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.random.RandomGenerator;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
@@ -182,6 +183,64 @@ final class BukkitEffectActionRegistryTest {
     }
 
     @Test
+    void lootTableDropsConfiguredTableAtEntityLocation() {
+        LivingEntity entity = mock(LivingEntity.class);
+        Player player = mock(Player.class);
+        Location location = mock(Location.class);
+        World world = mock(World.class);
+        RecordingLootTableDropper lootTableDropper = new RecordingLootTableDropper();
+        when(entity.getLocation()).thenReturn(location);
+        when(location.getWorld()).thenReturn(world);
+        BukkitEffectActionRegistry registry = new BukkitEffectActionRegistry(
+                new NoopEconomy(),
+                new FixedRandom(0),
+                new RecordingCommandDispatcher(),
+                new RecordingItemDropper(),
+                new RecordingPotionApplier(),
+                new RecordingExperienceDropper(),
+                new RecordingHealthEditor(0, 20),
+                new RecordingDamageDealer(),
+                new RecordingVelocityApplier(),
+                new RecordingWorldEffects(),
+                lootTableDropper);
+
+        registry.action("loot_table").orElseThrow().execute(
+                new ActionDefinition("loot_table", Map.of("table", "minecraft:entities/sheep", "rolls", 2)),
+                TriggerContext.forEntity(entity, player));
+
+        assertThat(lootTableDropper.location).isSameAs(location);
+        assertThat(lootTableDropper.tableKey).isEqualTo(NamespacedKey.minecraft("entities/sheep"));
+        assertThat(lootTableDropper.entity).isSameAs(entity);
+        assertThat(lootTableDropper.player).isSameAs(player);
+        assertThat(lootTableDropper.rolls).isEqualTo(2);
+    }
+
+    @Test
+    void lootTableIgnoresInvalidTableKey() {
+        LivingEntity entity = mock(LivingEntity.class);
+        RecordingLootTableDropper lootTableDropper = new RecordingLootTableDropper();
+        when(entity.getLocation()).thenReturn(mock(Location.class));
+        BukkitEffectActionRegistry registry = new BukkitEffectActionRegistry(
+                new NoopEconomy(),
+                new FixedRandom(0),
+                new RecordingCommandDispatcher(),
+                new RecordingItemDropper(),
+                new RecordingPotionApplier(),
+                new RecordingExperienceDropper(),
+                new RecordingHealthEditor(0, 20),
+                new RecordingDamageDealer(),
+                new RecordingVelocityApplier(),
+                new RecordingWorldEffects(),
+                lootTableDropper);
+
+        registry.action("loot_table").orElseThrow().execute(
+                new ActionDefinition("loot_table", Map.of("table", "not a key")),
+                TriggerContext.forEntity(entity, mock(Player.class)));
+
+        assertThat(lootTableDropper.tableKey).isNull();
+    }
+
+    @Test
     void healIncreasesTargetHealthUpToMaximum() {
         Player player = mock(Player.class);
         RecordingHealthEditor healthEditor = new RecordingHealthEditor(10.0, 14.0);
@@ -339,7 +398,8 @@ final class BukkitEffectActionRegistryTest {
                 extra instanceof RecordingHealthEditor healthEditor ? healthEditor : new RecordingHealthEditor(0, 20),
                 extra instanceof RecordingDamageDealer damageDealer ? damageDealer : new RecordingDamageDealer(),
                 extra instanceof RecordingVelocityApplier velocityApplier ? velocityApplier : new RecordingVelocityApplier(),
-                extra instanceof RecordingWorldEffects worldEffects ? worldEffects : new RecordingWorldEffects());
+                extra instanceof RecordingWorldEffects worldEffects ? worldEffects : new RecordingWorldEffects(),
+                new RecordingLootTableDropper());
     }
 
     private static Location location(double x, double y, double z) {
@@ -495,6 +555,23 @@ final class BukkitEffectActionRegistryTest {
         public void strikeLightningEffect(World world, Location location) {
             this.world = world;
             this.location = location;
+        }
+    }
+
+    private static final class RecordingLootTableDropper implements BukkitEffectActionRegistry.LootTableDropper {
+        private Location location;
+        private NamespacedKey tableKey;
+        private LivingEntity entity;
+        private Player player;
+        private int rolls;
+
+        @Override
+        public void drop(Location location, NamespacedKey tableKey, LivingEntity entity, Player player, int rolls) {
+            this.location = location;
+            this.tableKey = tableKey;
+            this.entity = entity;
+            this.player = player;
+            this.rolls = rolls;
         }
     }
 
