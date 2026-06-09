@@ -23,7 +23,7 @@
 # - item_drop: material + amount, where amount can be a number or "min-max".
 # - potion_effect: effect + duration-ticks + amplifier, target defaults to the player.
 # - currency_drop: amount deposited through VaultUnlocked/Vault economy when available.
-# - console_command, player_command, op_player_command: command text with placeholders.
+# - console_command or player_command: command text with placeholders.
 # - xp_drop: amount of experience to drop at the mob.
 # - heal or damage: amount, target defaults to player and can be mob.
 # - knockback: strength, optional y, target defaults to player and can be mob.

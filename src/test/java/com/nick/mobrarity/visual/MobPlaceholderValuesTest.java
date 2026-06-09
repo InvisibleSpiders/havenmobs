@@ -36,6 +36,22 @@ final class MobPlaceholderValuesTest {
     }
 
     @Test
+    void usesConfiguredVariantNametagForVariantPlaceholder() {
+        LivingEntity entity = mock(LivingEntity.class);
+        when(entity.getType()).thenReturn(EntityType.SHEEP);
+        RarityTier tier = new RarityTier("rare", 1.0, "<aqua>Rare</aqua>", Map.of());
+        MobVariant variant = new MobVariant("toxic_sheep", "rare", 1.0, "<green>Toxic Sheep</green>", Map.of());
+        MobProfile profile = new MobProfile(Map.of(SpawnReason.NATURAL, true), Map.of("toxic_sheep", variant));
+
+        Map<String, String> values = MobPlaceholderValues.from(
+                new ConfigSnapshot(Map.of("rare", tier), Map.of(EntityType.SHEEP, profile)),
+                entity,
+                new MobRarityData("rare", "toxic_sheep", 7));
+
+        assertThat(values).containsEntry("mobrarity_variant", "Toxic Sheep");
+    }
+
+    @Test
     void fallsBackToHumanizedKeysWhenConfigEntriesAreMissing() {
         LivingEntity entity = mock(LivingEntity.class);
         when(entity.getType()).thenReturn(EntityType.ZOMBIE_VILLAGER);

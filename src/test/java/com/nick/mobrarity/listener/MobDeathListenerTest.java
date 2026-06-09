@@ -48,13 +48,51 @@ final class MobDeathListenerTest {
         EffectEngine effectEngine = new EffectEngine(type -> Optional.of((action, context) -> contexts.add(context)), () -> 0.0);
         TriggerDefinition trigger = new TriggerDefinition("on_death", 1.0, 0, 0,
                 List.of(new ActionDefinition("message", Map.of())));
-        MobDeathListener listener = new MobDeathListener(tracker, effectEngine, ignored -> Optional.of(trigger), () -> 100);
+        MobDeathListener listener = new MobDeathListener(
+                tracker,
+                effectEngine,
+                ignored -> Optional.of(trigger),
+                () -> 100,
+                trackedId -> playerId.equals(trackedId) ? Optional.of(player) : Optional.empty());
 
         listener.onEntityDeath(deathEvent);
 
         assertThat(contexts).hasSize(1);
         assertThat(contexts.getFirst().entity()).contains(entity);
         assertThat(contexts.getFirst().player()).contains(player);
+    }
+
+    @Test
+    void deathTriggerCreditsTrackedPlayerWhenFatalPlayerSourceDiffers() {
+        UUID entityId = UUID.randomUUID();
+        UUID trackedPlayerId = UUID.randomUUID();
+        UUID fatalPlayerId = UUID.randomUUID();
+        LivingEntity entity = mockLivingEntity(entityId);
+        Player trackedPlayer = mockPlayer(trackedPlayerId);
+        Player fatalPlayer = mockPlayer(fatalPlayerId);
+        EntityDamageByEntityEvent fatalCause = mock(EntityDamageByEntityEvent.class);
+        when(fatalCause.getDamager()).thenReturn(fatalPlayer);
+        EntityDeathEvent deathEvent = mock(EntityDeathEvent.class);
+        when(deathEvent.getEntity()).thenReturn(entity);
+        when(entity.getLastDamageCause()).thenReturn(fatalCause);
+        PlayerDamageTracker tracker = new PlayerDamageTracker(100);
+        tracker.record(entityId, trackedPlayerId, 40);
+        List<TriggerContext> contexts = new ArrayList<>();
+        EffectEngine effectEngine = new EffectEngine(type -> Optional.of((action, context) -> contexts.add(context)), () -> 0.0);
+        TriggerDefinition trigger = new TriggerDefinition("on_death", 1.0, 0, 0,
+                List.of(new ActionDefinition("message", Map.of())));
+        MobDeathListener listener = new MobDeathListener(
+                tracker,
+                effectEngine,
+                ignored -> Optional.of(trigger),
+                () -> 100,
+                playerId -> trackedPlayerId.equals(playerId) ? Optional.of(trackedPlayer) : Optional.empty());
+
+        listener.onEntityDeath(deathEvent);
+
+        assertThat(contexts).hasSize(1);
+        assertThat(contexts.getFirst().player()).contains(trackedPlayer);
+        assertThat(tracker.lastPlayer(entityId, 100)).isEmpty();
     }
 
     @Test
@@ -72,7 +110,12 @@ final class MobDeathListenerTest {
         EffectEngine effectEngine = new EffectEngine(type -> Optional.of((action, context) -> executed.add(type)), () -> 0.0);
         TriggerDefinition trigger = new TriggerDefinition("on_death", 1.0, 0, 0,
                 List.of(new ActionDefinition("message", Map.of())));
-        MobDeathListener listener = new MobDeathListener(tracker, effectEngine, ignored -> Optional.of(trigger), () -> 100);
+        MobDeathListener listener = new MobDeathListener(
+                tracker,
+                effectEngine,
+                ignored -> Optional.of(trigger),
+                () -> 100,
+                trackedId -> playerId.equals(trackedId) ? Optional.of(mockPlayer(playerId)) : Optional.empty());
 
         listener.onEntityDeath(deathEvent);
 
@@ -96,7 +139,8 @@ final class MobDeathListenerTest {
                 new PlayerDamageTracker(100),
                 effectEngine,
                 ignored -> Optional.of(trigger),
-                () -> 100);
+                () -> 100,
+                ignored -> Optional.of(player));
 
         listener.onEntityDeath(deathEvent);
 

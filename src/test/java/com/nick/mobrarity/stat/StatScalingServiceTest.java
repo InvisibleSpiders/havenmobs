@@ -25,7 +25,8 @@ final class StatScalingServiceTest {
         RecordingAttributeAccessor accessor = new RecordingAttributeAccessor(Map.of(
                 "max-health", 20.0,
                 "attack-damage", 4.0));
-        StatScalingService service = new StatScalingService(accessor);
+        RecordingBaselineStore baselineStore = new RecordingBaselineStore();
+        StatScalingService service = new StatScalingService(accessor, baselineStore);
 
         service.apply(snapshot(), entity, new MobRarityData("rare", "toxic_sheep", 5));
 
@@ -33,6 +34,36 @@ final class StatScalingServiceTest {
                 .containsEntry("max-health", 31.0)
                 .containsEntry("attack-damage", 8.0);
         assertThat(accessor.healedToMax).isTrue();
+    }
+
+    @Test
+    void repeatedApplyUsesStoredOriginalBaseValuesWithoutCompounding() {
+        LivingEntity entity = mock(LivingEntity.class);
+        when(entity.getType()).thenReturn(EntityType.SHEEP);
+        RecordingAttributeAccessor accessor = new RecordingAttributeAccessor(Map.of("max-health", 20.0));
+        RecordingBaselineStore baselineStore = new RecordingBaselineStore();
+        StatScalingService service = new StatScalingService(accessor, baselineStore);
+        MobRarityData data = new MobRarityData("rare", "toxic_sheep", 5);
+
+        service.apply(snapshot(), entity, data);
+        service.apply(snapshot(), entity, data);
+
+        assertThat(accessor.baseValues).containsEntry("max-health", 31.0);
+    }
+
+    @Test
+    void clearRestoresStoredOriginalBaseValues() {
+        LivingEntity entity = mock(LivingEntity.class);
+        when(entity.getType()).thenReturn(EntityType.SHEEP);
+        RecordingAttributeAccessor accessor = new RecordingAttributeAccessor(Map.of("max-health", 20.0));
+        RecordingBaselineStore baselineStore = new RecordingBaselineStore();
+        StatScalingService service = new StatScalingService(accessor, baselineStore);
+
+        service.apply(snapshot(), entity, new MobRarityData("rare", "toxic_sheep", 5));
+        service.clear(entity);
+
+        assertThat(accessor.baseValues).containsEntry("max-health", 20.0);
+        assertThat(baselineStore.baselines(entity)).isEmpty();
     }
 
     @Test
@@ -92,6 +123,25 @@ final class StatScalingServiceTest {
         @Override
         public void healToMax(LivingEntity entity) {
             healedToMax = true;
+        }
+    }
+
+    private static final class RecordingBaselineStore implements StatBaselineStore {
+        private final Map<LivingEntity, Map<String, Double>> baselines = new HashMap<>();
+
+        @Override
+        public Map<String, Double> baselines(LivingEntity entity) {
+            return baselines.getOrDefault(entity, Map.of());
+        }
+
+        @Override
+        public void storeBaseline(LivingEntity entity, String statKey, double value) {
+            baselines.computeIfAbsent(entity, ignored -> new HashMap<>()).putIfAbsent(statKey, value);
+        }
+
+        @Override
+        public void clear(LivingEntity entity) {
+            baselines.remove(entity);
         }
     }
 }

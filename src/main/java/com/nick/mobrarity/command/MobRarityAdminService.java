@@ -69,6 +69,7 @@ public final class MobRarityAdminService implements MobRarityCommand.AdminServic
     public AdminCommandResult clear(Player player) {
         return targetResolver.target(player)
                 .map(target -> {
+                    clearScaling(target);
                     mobTagService.clear(target);
                     return AdminCommandResult.success(
                             "Cleared MobRarity data from %s.".formatted(target.getType().name()));
@@ -153,6 +154,12 @@ public final class MobRarityAdminService implements MobRarityCommand.AdminServic
     private void applyScaling(LivingEntity entity, MobRarityData data) {
         if (statScalingService != null) {
             statScalingService.apply(configSupplier.get(), entity, data);
+        }
+    }
+
+    private void clearScaling(LivingEntity entity) {
+        if (statScalingService != null) {
+            statScalingService.clear(entity);
         }
     }
 

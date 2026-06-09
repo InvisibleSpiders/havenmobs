@@ -28,6 +28,14 @@ public final class PlayerDamageTracker {
         return Optional.of(record.playerId());
     }
 
+    public void remove(UUID entityId) {
+        records.remove(Objects.requireNonNull(entityId, "entityId"));
+    }
+
+    public void pruneExpired(long currentTick) {
+        records.entrySet().removeIf(entry -> currentTick - entry.getValue().tick() > expiryTicks);
+    }
+
     private record DamageRecord(UUID playerId, long tick) {
     }
 }

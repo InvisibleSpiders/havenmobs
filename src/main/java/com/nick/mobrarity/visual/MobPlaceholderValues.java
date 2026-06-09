@@ -47,7 +47,10 @@ public final class MobPlaceholderValues {
         if (variant == null) {
             return humanize(data.variantKey());
         }
-        return humanize(variant.key());
+        if (variant.nametag() == null || variant.nametag().isBlank()) {
+            return humanize(variant.key());
+        }
+        return plainMiniMessage(variant.nametag());
     }
 
     private static String plainMiniMessage(String value) {
