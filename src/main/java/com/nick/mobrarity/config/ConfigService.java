@@ -5,6 +5,7 @@ import com.nick.mobrarity.effect.TriggerDefinition;
 import com.nick.mobrarity.rarity.MobProfile;
 import com.nick.mobrarity.rarity.MobVariant;
 import com.nick.mobrarity.rarity.RarityTier;
+import com.nick.mobrarity.stat.StatModifier;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -101,6 +102,7 @@ public final class ConfigService {
                     key,
                     section.getDouble("weight", 1.0),
                     section.getString("display-name"),
+                    parseStats(optionalChildSection(section, "stats", tierPath + ".stats", resourceName), tierPath + ".stats", resourceName),
                     parseTriggers(optionalChildSection(section, "triggers", tierPath + ".triggers", resourceName), tierPath + ".triggers", resourceName)));
         }
         return tiers;
@@ -172,9 +174,27 @@ public final class ConfigService {
                     tierKey,
                     section.getDouble("weight", 1.0),
                     section.getString("display.nametag"),
+                    parseStats(optionalChildSection(section, "stats", variantPath + ".stats", resourceName), variantPath + ".stats", resourceName),
                     parseTriggers(optionalChildSection(section, "triggers", variantPath + ".triggers", resourceName), variantPath + ".triggers", resourceName)));
         }
         return variants;
+    }
+
+    private static Map<String, StatModifier> parseStats(ConfigurationSection statsSection, String path, String resourceName) {
+        Map<String, StatModifier> stats = new LinkedHashMap<>();
+        if (statsSection == null) {
+            return stats;
+        }
+        for (String key : statsSection.getKeys(false)) {
+            String statPath = path + "." + key;
+            validateConfigKey(key, statPath, resourceName);
+            ConfigurationSection section = requiredChildSection(statsSection, key, statPath, resourceName);
+            stats.put(key, new StatModifier(
+                    section.getDouble("add", 0.0),
+                    section.getDouble("multiply", 1.0),
+                    section.getDouble("per-level", 0.0)));
+        }
+        return stats;
     }
 
     private static Map<String, TriggerDefinition> parseTriggers(ConfigurationSection triggersSection, String path, String resourceName) {

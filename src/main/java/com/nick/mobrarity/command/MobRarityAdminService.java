@@ -3,6 +3,7 @@ package com.nick.mobrarity.command;
 import com.nick.mobrarity.config.ConfigSnapshot;
 import com.nick.mobrarity.rarity.MobProfile;
 import com.nick.mobrarity.rarity.MobVariant;
+import com.nick.mobrarity.stat.StatScalingService;
 import com.nick.mobrarity.tag.MobRarityData;
 import com.nick.mobrarity.tag.MobTagService;
 import java.util.ArrayList;
@@ -23,14 +24,24 @@ public final class MobRarityAdminService implements MobRarityCommand.AdminServic
     private final Supplier<ConfigSnapshot> configSupplier;
     private final MobTagService mobTagService;
     private final TargetResolver targetResolver;
+    private final StatScalingService statScalingService;
 
     public MobRarityAdminService(
             Supplier<ConfigSnapshot> configSupplier,
             MobTagService mobTagService,
             TargetResolver targetResolver) {
+        this(configSupplier, mobTagService, targetResolver, null);
+    }
+
+    public MobRarityAdminService(
+            Supplier<ConfigSnapshot> configSupplier,
+            MobTagService mobTagService,
+            TargetResolver targetResolver,
+            StatScalingService statScalingService) {
         this.configSupplier = Objects.requireNonNull(configSupplier, "configSupplier");
         this.mobTagService = Objects.requireNonNull(mobTagService, "mobTagService");
         this.targetResolver = Objects.requireNonNull(targetResolver, "targetResolver");
+        this.statScalingService = statScalingService;
     }
 
     @Override
@@ -92,6 +103,7 @@ public final class MobRarityAdminService implements MobRarityCommand.AdminServic
         }
 
         mobTagService.tag(livingEntity, new MobRarityData(tierKey, variantKey, level));
+        applyScaling(livingEntity, new MobRarityData(tierKey, variantKey, level));
         return AdminCommandResult.success("Spawned %s %s/%s level %d on %s.".formatted(
                 entityType.name(), tierKey, variantKey, level, target.getName()));
     }
@@ -134,7 +146,14 @@ public final class MobRarityAdminService implements MobRarityCommand.AdminServic
 
         MobRarityData data = new MobRarityData(tierKey, variantKey, level);
         mobTagService.tag(entity, data);
+        applyScaling(entity, data);
         return java.util.Optional.of(data);
+    }
+
+    private void applyScaling(LivingEntity entity, MobRarityData data) {
+        if (statScalingService != null) {
+            statScalingService.apply(configSupplier.get(), entity, data);
+        }
     }
 
     private java.util.Optional<MobVariant> configuredVariant(EntityType entityType, String tierKey, String variantKey) {

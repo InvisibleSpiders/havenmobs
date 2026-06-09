@@ -67,6 +67,40 @@ final class ConfigServiceTest {
     }
 
     @Test
+    void loadsTierAndVariantStatModifiers() {
+        ConfigService service = ConfigService.fromYaml(yaml("""
+                tiers:
+                  rare:
+                    weight: 1.0
+                    stats:
+                      max-health:
+                        add: 4.0
+                        per-level: 0.25
+                """), yaml("""
+                mobs:
+                  SHEEP:
+                    variants:
+                      toxic_sheep:
+                        tier: rare
+                        weight: 1.0
+                        stats:
+                          movement-speed:
+                            multiply: 1.15
+                """));
+
+        var tierStats = service.snapshot().tiers().get("rare").stats();
+        var variantStats = service.snapshot().mobProfiles()
+                .get(EntityType.SHEEP)
+                .variants()
+                .get("toxic_sheep")
+                .stats();
+
+        assertThat(tierStats.get("max-health").add()).isEqualTo(4.0);
+        assertThat(tierStats.get("max-health").perLevel()).isEqualTo(0.25);
+        assertThat(variantStats.get("movement-speed").multiply()).isEqualTo(1.15);
+    }
+
+    @Test
     void reportsUnknownTierReference() {
         ValidationResult result = ConfigService.validateVariantTier("missing", java.util.Set.of("rare"));
 

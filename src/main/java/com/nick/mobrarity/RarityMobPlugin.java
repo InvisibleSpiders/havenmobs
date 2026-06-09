@@ -31,6 +31,8 @@ import com.nick.mobrarity.listener.PlayerDamageTracker;
 import com.nick.mobrarity.rarity.MobVariant;
 import com.nick.mobrarity.rarity.SpawnRarityService;
 import com.nick.mobrarity.rarity.WeightedSelector;
+import com.nick.mobrarity.stat.BukkitStatAttributeAccessor;
+import com.nick.mobrarity.stat.StatScalingService;
 import com.nick.mobrarity.tag.MobTagService;
 import java.nio.file.Path;
 import java.util.List;
@@ -59,6 +61,7 @@ public final class RarityMobPlugin extends JavaPlugin {
         MobLevelService mobLevelService = new MobLevelService(levelSettings);
         MobTagService mobTagService = new MobTagService(this);
         registerPlaceholderExpansion(runtimeConfig, mobTagService);
+        StatScalingService statScalingService = new StatScalingService(new BukkitStatAttributeAccessor());
         PlayerDamageTracker playerDamageTracker = new PlayerDamageTracker(20L * 30L);
         EconomyAdapter economyAdapter = loadEconomyAdapter();
         ProtectionAdapter protectionAdapter = loadProtectionAdapter();
@@ -78,7 +81,7 @@ public final class RarityMobPlugin extends JavaPlugin {
         Bukkit.getScheduler().runTaskTimer(this, () -> auraTickService.tick(Bukkit.getCurrentTick()), 20L, 20L);
 
         getServer().getPluginManager().registerEvents(
-                new MobSpawnListener(() -> runtimeConfig.get().mobProfiles(), spawnRarityService, mobLevelService, mobTagService),
+                new MobSpawnListener(runtimeConfig::get, spawnRarityService, mobLevelService, mobTagService, statScalingService),
                 this);
         getServer().getPluginManager().registerEvents(
                 new MobDamageListener(playerDamageTracker, Bukkit::getCurrentTick, effectEngine, triggerService::trigger),
@@ -92,7 +95,8 @@ public final class RarityMobPlugin extends JavaPlugin {
             MobRarityAdminService adminService = new MobRarityAdminService(
                     runtimeConfig::get,
                     mobTagService,
-                    new BukkitTargetResolver(16));
+                    new BukkitTargetResolver(16),
+                    statScalingService);
             mobRarityCommand.setExecutor(new MobRarityCommand(
                     adminService,
                     () -> reloadRuntimeConfig(dataFolder, runtimeConfig),
