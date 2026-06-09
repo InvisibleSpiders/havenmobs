@@ -52,7 +52,7 @@ Configured triggers currently support:
 - `item_drop` with `material` and numeric or ranged `amount`, such as `2-8`.
 - `potion_effect` with `effect`, `duration-ticks`, `amplifier`, and optional `target`.
 - `currency_drop` with `amount`, paid through VaultUnlocked or Vault.
-- `console_command`, `player_command`, and `op_player_command` with `command`.
+- `console_command` and `player_command` with `command`.
 - `xp_drop` with `amount`.
 - `heal` and `damage` with `amount` and optional `target`.
 - `knockback` with `strength`, optional `y`, and optional `target`.

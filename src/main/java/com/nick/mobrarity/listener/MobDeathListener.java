@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
+import java.util.UUID;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -20,16 +21,27 @@ public final class MobDeathListener implements Listener {
     private final EffectEngine effectEngine;
     private final Function<LivingEntity, Optional<TriggerDefinition>> deathTriggerLookup;
     private final LongSupplier currentTick;
+    private final Function<UUID, Optional<Player>> playerLookup;
 
     public MobDeathListener(
             PlayerDamageTracker tracker,
             EffectEngine effectEngine,
             Function<LivingEntity, Optional<TriggerDefinition>> deathTriggerLookup,
             LongSupplier currentTick) {
+        this(tracker, effectEngine, deathTriggerLookup, currentTick, playerId -> Optional.empty());
+    }
+
+    public MobDeathListener(
+            PlayerDamageTracker tracker,
+            EffectEngine effectEngine,
+            Function<LivingEntity, Optional<TriggerDefinition>> deathTriggerLookup,
+            LongSupplier currentTick,
+            Function<UUID, Optional<Player>> playerLookup) {
         this.tracker = Objects.requireNonNull(tracker, "tracker");
         this.effectEngine = Objects.requireNonNull(effectEngine, "effectEngine");
         this.deathTriggerLookup = Objects.requireNonNull(deathTriggerLookup, "deathTriggerLookup");
         this.currentTick = Objects.requireNonNull(currentTick, "currentTick");
+        this.playerLookup = Objects.requireNonNull(playerLookup, "playerLookup");
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -42,10 +54,16 @@ public final class MobDeathListener implements Listener {
                 || MobDamageListener.playerSource(damageByEntity.getDamager()).isEmpty()) {
             return;
         }
-        Player player = MobDamageListener.playerSource(damageByEntity.getDamager()).get();
-        if (tracker.lastPlayer(entity.getUniqueId(), currentTick.getAsLong()).isEmpty()) {
+        Optional<UUID> trackedPlayerId = tracker.lastPlayer(entity.getUniqueId(), currentTick.getAsLong());
+        if (trackedPlayerId.isEmpty()) {
             return;
         }
-        deathTriggerLookup.apply(entity).ifPresent(trigger -> effectEngine.run(trigger, TriggerContext.forEntity(entity, player)));
+        Optional<Player> trackedPlayer = playerLookup.apply(trackedPlayerId.get());
+        tracker.remove(entity.getUniqueId());
+        if (trackedPlayer.isEmpty()) {
+            return;
+        }
+        deathTriggerLookup.apply(entity).ifPresent(trigger ->
+                effectEngine.run(trigger, TriggerContext.forEntity(entity, trackedPlayer.get())));
     }
 }

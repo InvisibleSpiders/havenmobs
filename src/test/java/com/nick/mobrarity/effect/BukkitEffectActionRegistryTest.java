@@ -136,20 +136,6 @@ final class BukkitEffectActionRegistryTest {
     }
 
     @Test
-    void opPlayerCommandDispatchesAsTemporaryOpPlayer() {
-        Player player = mock(Player.class);
-        RecordingCommandDispatcher dispatcher = new RecordingCommandDispatcher();
-        BukkitEffectActionRegistry registry = registry(dispatcher);
-
-        registry.action("op_player_command").orElseThrow().execute(
-                new ActionDefinition("op_player_command", Map.of("command", "adminthing")),
-                TriggerContext.forEntity(mock(LivingEntity.class), player));
-
-        assertThat(dispatcher.opPlayerCommands).containsExactly("adminthing");
-        assertThat(dispatcher.player).isSameAs(player);
-    }
-
-    @Test
     void xpDropDropsExperienceAtEntityLocation() {
         LivingEntity entity = mock(LivingEntity.class);
         Location location = mock(Location.class);
@@ -166,6 +152,33 @@ final class BukkitEffectActionRegistryTest {
         assertThat(experienceDropper.world).isSameAs(world);
         assertThat(experienceDropper.location).isSameAs(location);
         assertThat(experienceDropper.amount).isEqualTo(7);
+    }
+
+    @Test
+    void xpDropSupportsInclusiveAmountRangeUsingInjectedRandom() {
+        LivingEntity entity = mock(LivingEntity.class);
+        Location location = mock(Location.class);
+        World world = mock(World.class);
+        RecordingExperienceDropper experienceDropper = new RecordingExperienceDropper();
+        when(entity.getLocation()).thenReturn(location);
+        when(location.getWorld()).thenReturn(world);
+        BukkitEffectActionRegistry registry = new BukkitEffectActionRegistry(
+                new NoopEconomy(),
+                new FixedRandom(2),
+                new RecordingCommandDispatcher(),
+                new RecordingItemDropper(),
+                new RecordingPotionApplier(),
+                experienceDropper,
+                new RecordingHealthEditor(0, 20),
+                new RecordingDamageDealer(),
+                new RecordingVelocityApplier(),
+                new RecordingWorldEffects());
+
+        registry.action("xp_drop").orElseThrow().execute(
+                new ActionDefinition("xp_drop", Map.of("amount", "2-8")),
+                TriggerContext.forEntity(entity, null));
+
+        assertThat(experienceDropper.amount).isEqualTo(4);
     }
 
     @Test
@@ -365,7 +378,6 @@ final class BukkitEffectActionRegistryTest {
     private static final class RecordingCommandDispatcher implements BukkitEffectActionRegistry.CommandDispatcher {
         private final List<String> consoleCommands = new ArrayList<>();
         private final List<String> playerCommands = new ArrayList<>();
-        private final List<String> opPlayerCommands = new ArrayList<>();
         private Player player;
 
         @Override
@@ -377,12 +389,6 @@ final class BukkitEffectActionRegistryTest {
         public void dispatchPlayer(Player player, String command) {
             this.player = player;
             playerCommands.add(command);
-        }
-
-        @Override
-        public void dispatchOpPlayer(Player player, String command) {
-            this.player = player;
-            opPlayerCommands.add(command);
         }
     }
 

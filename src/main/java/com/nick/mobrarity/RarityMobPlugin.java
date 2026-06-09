@@ -32,6 +32,7 @@ import com.nick.mobrarity.rarity.MobVariant;
 import com.nick.mobrarity.rarity.SpawnRarityService;
 import com.nick.mobrarity.rarity.WeightedSelector;
 import com.nick.mobrarity.stat.BukkitStatAttributeAccessor;
+import com.nick.mobrarity.stat.BukkitStatBaselineStore;
 import com.nick.mobrarity.stat.StatScalingService;
 import com.nick.mobrarity.tag.MobTagService;
 import java.nio.file.Path;
@@ -45,8 +46,11 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.scheduler.BukkitTask;
 
 public final class RarityMobPlugin extends JavaPlugin {
+    private BukkitTask auraTask;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -61,7 +65,9 @@ public final class RarityMobPlugin extends JavaPlugin {
         MobLevelService mobLevelService = new MobLevelService(levelSettings);
         MobTagService mobTagService = new MobTagService(this);
         registerPlaceholderExpansion(runtimeConfig, mobTagService);
-        StatScalingService statScalingService = new StatScalingService(new BukkitStatAttributeAccessor());
+        StatScalingService statScalingService = new StatScalingService(
+                new BukkitStatAttributeAccessor(),
+                new BukkitStatBaselineStore(this));
         PlayerDamageTracker playerDamageTracker = new PlayerDamageTracker(20L * 30L);
         EconomyAdapter economyAdapter = loadEconomyAdapter();
         ProtectionAdapter protectionAdapter = loadProtectionAdapter();
@@ -78,7 +84,15 @@ public final class RarityMobPlugin extends JavaPlugin {
                 triggerService::trigger,
                 protectionAdapter,
                 effectEngine);
-        Bukkit.getScheduler().runTaskTimer(this, () -> auraTickService.tick(Bukkit.getCurrentTick()), 20L, 20L);
+        auraTask = Bukkit.getScheduler().runTaskTimer(
+                this,
+                () -> {
+                    long currentTick = Bukkit.getCurrentTick();
+                    playerDamageTracker.pruneExpired(currentTick);
+                    auraTickService.tick(currentTick);
+                },
+                20L,
+                20L);
 
         getServer().getPluginManager().registerEvents(
                 new MobSpawnListener(runtimeConfig::get, spawnRarityService, mobLevelService, mobTagService, statScalingService),
@@ -87,7 +101,12 @@ public final class RarityMobPlugin extends JavaPlugin {
                 new MobDamageListener(playerDamageTracker, Bukkit::getCurrentTick, effectEngine, triggerService::trigger),
                 this);
         getServer().getPluginManager().registerEvents(
-                new MobDeathListener(playerDamageTracker, effectEngine, entity -> triggerService.trigger(entity, "on_death"), Bukkit::getCurrentTick),
+                new MobDeathListener(
+                        playerDamageTracker,
+                        effectEngine,
+                        entity -> triggerService.trigger(entity, "on_death"),
+                        Bukkit::getCurrentTick,
+                        playerId -> Optional.ofNullable(Bukkit.getPlayer(playerId))),
                 this);
         getServer().getPluginManager().registerEvents(new MobActivityListener(effectEngine, triggerService::trigger), this);
         PluginCommand mobRarityCommand = getCommand("mobrarity");
@@ -112,6 +131,10 @@ public final class RarityMobPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (auraTask != null) {
+            auraTask.cancel();
+            auraTask = null;
+        }
         getLogger().info("MobRarity disabled.");
     }
 

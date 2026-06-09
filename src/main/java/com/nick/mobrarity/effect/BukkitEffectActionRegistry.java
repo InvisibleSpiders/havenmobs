@@ -81,8 +81,7 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
                 Map.entry("currency_drop", (action, context) -> dropCurrency(action, context, economyAdapter)),
                 Map.entry("console_command", (action, context) -> runCommand(action, context, commandDispatcher, "console")),
                 Map.entry("player_command", (action, context) -> runCommand(action, context, commandDispatcher, "player")),
-                Map.entry("op_player_command", (action, context) -> runCommand(action, context, commandDispatcher, "op_player")),
-                Map.entry("xp_drop", (action, context) -> dropExperience(action, context, experienceDropper)),
+                Map.entry("xp_drop", (action, context) -> dropExperience(action, context, random, experienceDropper)),
                 Map.entry("heal", (action, context) -> heal(action, context, healthEditor)),
                 Map.entry("damage", (action, context) -> damage(action, context, damageDealer)),
                 Map.entry("knockback", (action, context) -> knockback(action, context, velocityApplier)),
@@ -170,7 +169,6 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
         }
         switch (source.toLowerCase(Locale.ROOT)) {
             case "player" -> context.player().ifPresent(player -> commandDispatcher.dispatchPlayer(player, command));
-            case "op_player" -> context.player().ifPresent(player -> commandDispatcher.dispatchOpPlayer(player, command));
             default -> commandDispatcher.dispatchConsole(command);
         }
     }
@@ -178,12 +176,13 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
     private static void dropExperience(
             ActionDefinition action,
             TriggerContext context,
+            RandomGenerator random,
             ExperienceDropper experienceDropper) {
         Optional<LivingEntity> entity = context.entity();
         if (entity.isEmpty()) {
             return;
         }
-        int amount = amount(action.values().getOrDefault("amount", 0), RandomGenerator.getDefault());
+        int amount = amount(action.values().getOrDefault("amount", 0), random);
         if (amount < 1) {
             return;
         }
@@ -347,8 +346,6 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
         void dispatchConsole(String command);
 
         void dispatchPlayer(Player player, String command);
-
-        void dispatchOpPlayer(Player player, String command);
     }
 
     interface ItemDropper {
@@ -393,17 +390,6 @@ public final class BukkitEffectActionRegistry implements EffectActionRegistry {
         @Override
         public void dispatchPlayer(Player player, String command) {
             player.performCommand(command);
-        }
-
-        @Override
-        public void dispatchOpPlayer(Player player, String command) {
-            boolean wasOp = player.isOp();
-            try {
-                player.setOp(true);
-                player.performCommand(command);
-            } finally {
-                player.setOp(wasOp);
-            }
         }
     }
 

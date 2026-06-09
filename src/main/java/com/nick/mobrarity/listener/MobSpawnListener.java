@@ -11,6 +11,8 @@ import com.nick.mobrarity.stat.StatScalingService;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -46,18 +48,33 @@ public final class MobSpawnListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
+        ConfigSnapshot config = configSupplier.get();
         processSpawn(
+                config,
                 event.getEntityType(),
                 event.getSpawnReason(),
-                event.getLocation().getY(),
+                event.getLocation(),
                 data -> {
                     mobTagService.tag(event.getEntity(), data);
-                    applyScaling(event.getEntity(), data);
+                    applyScaling(config, event.getEntity(), data);
                 });
     }
 
-    void processSpawn(EntityType entityType, CreatureSpawnEvent.SpawnReason spawnReason, double y, TagCallback tagCallback) {
+    void processSpawn(
+            EntityType entityType,
+            CreatureSpawnEvent.SpawnReason spawnReason,
+            Location location,
+            TagCallback tagCallback) {
         ConfigSnapshot config = configSupplier.get();
+        processSpawn(config, entityType, spawnReason, location, tagCallback);
+    }
+
+    private void processSpawn(
+            ConfigSnapshot config,
+            EntityType entityType,
+            CreatureSpawnEvent.SpawnReason spawnReason,
+            Location location,
+            TagCallback tagCallback) {
         MobProfile profile = config.mobProfiles().get(entityType);
         if (profile == null) {
             return;
@@ -69,14 +86,25 @@ public final class MobSpawnListener implements Listener {
         }
 
         MobVariant variant = selectedVariant.get();
-        int level = mobLevelService.calculateLevel(0, y);
+        int level = mobLevelService.calculateLevel(horizontalDistanceFromSpawn(location), location.getY());
         tagCallback.tag(new MobRarityData(variant.tierKey(), variant.key(), level));
     }
 
-    private void applyScaling(org.bukkit.entity.LivingEntity entity, MobRarityData data) {
+    private void applyScaling(ConfigSnapshot config, org.bukkit.entity.LivingEntity entity, MobRarityData data) {
         if (statScalingService != null) {
-            statScalingService.apply(configSupplier.get(), entity, data);
+            statScalingService.apply(config, entity, data);
         }
+    }
+
+    private static double horizontalDistanceFromSpawn(Location location) {
+        World world = location.getWorld();
+        if (world == null) {
+            return 0.0;
+        }
+        Location spawn = world.getSpawnLocation();
+        double x = location.getX() - spawn.getX();
+        double z = location.getZ() - spawn.getZ();
+        return Math.sqrt((x * x) + (z * z));
     }
 
     @FunctionalInterface
