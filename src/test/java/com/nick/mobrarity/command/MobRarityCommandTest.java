@@ -24,7 +24,7 @@ final class MobRarityCommandTest {
         boolean handled = command.onCommand(sender, mock(Command.class), "mobrarity", new String[0]);
 
         assertThat(handled).isTrue();
-        verify(sender).sendMessage("/mobrarity reload|validate|list|inspect|set|spawn|clear");
+        verify(sender).sendMessage("/mobrarity reload|validate|list|inspect|debug|set|spawn|clear");
     }
 
     @Test
@@ -140,6 +140,25 @@ final class MobRarityCommandTest {
     }
 
     @Test
+    void debugRoutesToAdminService() {
+        Player player = permittedPlayer("mobrarity.debug");
+        StubAdminService adminService = StubAdminService.empty();
+        adminService.debugResult = AdminCommandResult.success("Debug: SHEEP");
+        MobRarityCommand command = new MobRarityCommand(
+                adminService,
+                () -> AdminCommandResult.success("Reloaded MobRarity config."),
+                () -> AdminCommandResult.success("MobRarity config is valid."),
+                name -> Optional.empty(),
+                () -> List.of());
+
+        boolean handled = command.onCommand(player, mock(Command.class), "mobrarity", new String[] {"debug"});
+
+        assertThat(handled).isTrue();
+        assertThat(adminService.debugPlayer).isSameAs(player);
+        verify(player).sendMessage("Debug: SHEEP");
+    }
+
+    @Test
     void invalidLevelSendsUsageBeforeCallingSet() {
         Player player = permittedPlayer("mobrarity.set");
         StubAdminService adminService = StubAdminService.empty();
@@ -211,6 +230,7 @@ final class MobRarityCommandTest {
         private AdminCommandResult inspectResult = AdminCommandResult.failure("No targeted living mob found.");
         private AdminCommandResult setResult = AdminCommandResult.failure("No targeted living mob found.");
         private AdminCommandResult clearResult = AdminCommandResult.failure("No targeted living mob found.");
+        private AdminCommandResult debugResult = AdminCommandResult.failure("No targeted living mob found.");
         private AdminCommandResult spawnResult = AdminCommandResult.failure("Unable to spawn entity.");
         private AdminCommandResult listResult = AdminCommandResult.failure("Unknown list category.");
         private Player inspectPlayer;
@@ -219,6 +239,7 @@ final class MobRarityCommandTest {
         private String setVariant;
         private int setLevel;
         private Player clearPlayer;
+        private Player debugPlayer;
         private String listCategory;
         private CommandSender spawnSender;
         private Player spawnTarget;
@@ -250,6 +271,12 @@ final class MobRarityCommandTest {
         public AdminCommandResult clear(Player player) {
             clearPlayer = player;
             return clearResult;
+        }
+
+        @Override
+        public AdminCommandResult debug(Player player) {
+            debugPlayer = player;
+            return debugResult;
         }
 
         @Override

@@ -3,13 +3,16 @@ package com.nick.mobrarity.command;
 import com.nick.mobrarity.config.ConfigSnapshot;
 import com.nick.mobrarity.rarity.MobProfile;
 import com.nick.mobrarity.rarity.MobVariant;
+import com.nick.mobrarity.rarity.RarityTier;
 import com.nick.mobrarity.stat.StatScalingService;
 import com.nick.mobrarity.tag.MobRarityData;
 import com.nick.mobrarity.tag.MobTagService;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 import org.bukkit.Location;
@@ -52,6 +55,13 @@ public final class MobRarityAdminService implements MobRarityCommand.AdminServic
                                 target.getType().name(), data.tierKey(), data.variantKey(), data.level())))
                         .orElseGet(() -> AdminCommandResult.failure(
                                 "Target: %s has no MobRarity data.".formatted(target.getType().name()))))
+                .orElseGet(() -> AdminCommandResult.failure("No targeted living mob found."));
+    }
+
+    @Override
+    public AdminCommandResult debug(Player player) {
+        return targetResolver.target(player)
+                .map(this::debugTarget)
                 .orElseGet(() -> AdminCommandResult.failure("No targeted living mob found."));
     }
 
@@ -151,6 +161,27 @@ public final class MobRarityAdminService implements MobRarityCommand.AdminServic
         return java.util.Optional.of(data);
     }
 
+    private AdminCommandResult debugTarget(LivingEntity target) {
+        ConfigSnapshot snapshot = configSupplier.get();
+        Optional<MobRarityData> data = mobTagService.read(target);
+        MobProfile profile = snapshot.mobProfiles().get(target.getType());
+        if (profile == null) {
+            return AdminCommandResult.success("Debug %s: data=%s; profile=missing; tiers=%s.".formatted(
+                    target.getType().name(),
+                    data.map(MobRarityAdminService::dataSummary).orElse("none"),
+                    tierSummary(snapshot)));
+        }
+
+        return AdminCommandResult.success(
+                "Debug %s: data=%s; tiers=%s; variants=%s; spawn-sources=%s; active-variant=%s.".formatted(
+                        target.getType().name(),
+                        data.map(MobRarityAdminService::dataSummary).orElse("none"),
+                        tierSummary(snapshot),
+                        variantSummary(profile),
+                        spawnSourceSummary(profile),
+                        activeVariantSummary(profile, data)));
+    }
+
     private void applyScaling(LivingEntity entity, MobRarityData data) {
         if (statScalingService != null) {
             statScalingService.apply(configSupplier.get(), entity, data);
@@ -184,6 +215,50 @@ public final class MobRarityAdminService implements MobRarityCommand.AdminServic
     private static AdminCommandResult invalidVariant(EntityType entityType, String tierKey, String variantKey) {
         return AdminCommandResult.failure(
                 "Variant '%s' is not configured for %s.".formatted(variantKey, entityType.name()));
+    }
+
+    private static String dataSummary(MobRarityData data) {
+        return "%s/%s level %d".formatted(data.tierKey(), data.variantKey(), data.level());
+    }
+
+    private static String tierSummary(ConfigSnapshot snapshot) {
+        List<String> tiers = snapshot.tiers().values().stream()
+                .sorted(Comparator.comparing(RarityTier::key))
+                .map(tier -> "%s(weight=%s)".formatted(tier.key(), tier.weight()))
+                .toList();
+        return joined(tiers);
+    }
+
+    private static String variantSummary(MobProfile profile) {
+        List<String> variants = profile.variants().values().stream()
+                .sorted(Comparator.comparing(MobVariant::key))
+                .map(variant -> "%s(tier=%s, weight=%s, stats=%d, triggers=%d)".formatted(
+                        variant.key(),
+                        variant.tierKey(),
+                        variant.weight(),
+                        variant.stats().size(),
+                        variant.triggers().size()))
+                .toList();
+        return joined(variants);
+    }
+
+    private static String spawnSourceSummary(MobProfile profile) {
+        List<String> sources = profile.spawnSources().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> "%s=%s".formatted(entry.getKey().name(), entry.getValue()))
+                .toList();
+        return joined(sources);
+    }
+
+    private static String activeVariantSummary(MobProfile profile, Optional<MobRarityData> data) {
+        if (data.isEmpty()) {
+            return "none";
+        }
+        MobVariant variant = profile.variants().get(data.get().variantKey());
+        if (variant == null) {
+            return "missing";
+        }
+        return variant.tierKey().equals(data.get().tierKey()) ? "configured" : "tier-mismatch";
     }
 
     private static String joined(List<String> values) {

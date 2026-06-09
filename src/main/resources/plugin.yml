@@ -22,6 +22,7 @@ permissions:
       mobrarity.validate: true
       mobrarity.list: true
       mobrarity.inspect: true
+      mobrarity.debug: true
       mobrarity.set: true
       mobrarity.spawn: true
       mobrarity.clear: true
@@ -33,6 +34,8 @@ permissions:
   mobrarity.list:
     default: op
   mobrarity.inspect:
+    default: op
+  mobrarity.debug:
     default: op
   mobrarity.set:
     default: op

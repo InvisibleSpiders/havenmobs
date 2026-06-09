@@ -19,7 +19,7 @@ final class MobRarityTabCompleterTest {
                         mock(Command.class),
                         "mobrarity",
                         new String[] {""}))
-                .containsExactly("reload", "validate", "list", "inspect", "set", "spawn", "clear");
+                .containsExactly("reload", "validate", "list", "inspect", "debug", "set", "spawn", "clear");
     }
 
     @Test

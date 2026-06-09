@@ -27,6 +27,7 @@ Base command: `/mobrarity` with aliases `/mr` and `/mobr`.
 - `/mobrarity list variants`: requires `mobrarity.list`; lists configured mob variant keys.
 - `/mobrarity list mobs`: requires `mobrarity.list`; lists mob types with MobRarity profiles.
 - `/mobrarity inspect`: requires `mobrarity.inspect`; inspects the targeted living mob.
+- `/mobrarity debug`: requires `mobrarity.debug`; reports targeted mob data, configured variants, tier weights, and spawn source settings.
 - `/mobrarity set TIER VARIANT [level]`: requires `mobrarity.set`; tags the targeted mob.
 - `/mobrarity clear`: requires `mobrarity.clear`; clears data from the targeted mob.
 - `/mobrarity spawn ENTITY TIER VARIANT [level] [player]`: requires `mobrarity.spawn`.
@@ -40,6 +41,7 @@ Base command: `/mobrarity` with aliases `/mr` and `/mobr`.
 - `mobrarity.validate`: default `op`; allows `/mobrarity validate`.
 - `mobrarity.list`: default `op`; allows all `/mobrarity list` categories.
 - `mobrarity.inspect`: default `op`; allows `/mobrarity inspect`.
+- `mobrarity.debug`: default `op`; allows `/mobrarity debug`.
 - `mobrarity.set`: default `op`; allows `/mobrarity set`.
 - `mobrarity.clear`: default `op`; allows `/mobrarity clear`.
 - `mobrarity.spawn`: default `op`; allows `/mobrarity spawn`.
@@ -79,6 +81,8 @@ Tier and variant stats stack when a mob receives MobRarity data.
 - Also supported: `armor-toughness`, `knockback-resistance`, `follow-range`.
 - Each stat can use `add`, `multiply`, and `per-level`.
 - Changing `max-health` also heals the mob to its new maximum health.
+- Original stat baselines are stored on the mob so repeated admin assignments do not compound scaling.
+- `/mobrarity clear` removes rarity data and restores stored stat baselines.
 
 Supported triggers include `on_shear`, `on_aura_tick`, `on_damage`, `on_tame`,
 `on_breed`, `on_interact`, and player-caused `on_death`.

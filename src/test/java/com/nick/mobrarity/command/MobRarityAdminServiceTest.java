@@ -76,6 +76,32 @@ final class MobRarityAdminServiceTest {
     }
 
     @Test
+    void debugReportsTargetRarityAndConfigurationSummary() {
+        LivingEntity target = livingEntity(EntityType.SHEEP);
+        MobTagService tagService = mock(MobTagService.class);
+        when(tagService.read(target)).thenReturn(Optional.of(new MobRarityData("rare", "rare_sheep", 5)));
+        MobRarityAdminService service = service(tagService, Optional.of(target), config());
+
+        AdminCommandResult result = service.debug(mock(Player.class));
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.message()).isEqualTo(
+                "Debug SHEEP: data=rare/rare_sheep level 5; tiers=rare(weight=1.0); variants=rare_sheep(tier=rare, weight=1.0, stats=0, triggers=0); spawn-sources=NATURAL=true; active-variant=configured.");
+    }
+
+    @Test
+    void debugReportsMissingProfileForTarget() {
+        LivingEntity target = livingEntity(EntityType.ZOMBIE);
+        MobRarityAdminService service = service(mock(MobTagService.class), Optional.of(target), config());
+
+        AdminCommandResult result = service.debug(mock(Player.class));
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.message()).isEqualTo(
+                "Debug ZOMBIE: data=none; profile=missing; tiers=rare(weight=1.0).");
+    }
+
+    @Test
     void spawnCreatesLivingEntityAtTargetPlayerAndTagsIt() {
         Player targetPlayer = mock(Player.class);
         Location location = mock(Location.class);

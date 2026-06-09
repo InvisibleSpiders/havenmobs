@@ -2,8 +2,9 @@
 # Tiers define shared display, base spawn weights, scaling, and effects.
 
 # The key under tiers is the internal tier id used by mob variants.
-# Higher weights are more common when the plugin rolls a rarity.
-# MiniMessage is supported in display text.
+# Higher weights are more common when the plugin rolls a rarity. A tier with
+# weight 100 is far more common than a tier with weight 8 before level modifiers.
+# MiniMessage is supported in display text and nametag templates.
 # Placeholder values such as %mobrarity_level% are replaced before MiniMessage rendering.
 # Available placeholders include %mobrarity_tier%, %mobrarity_tier_key%,
 # %mobrarity_variant%, %mobrarity_variant_key%, %mobrarity_level%,
@@ -12,13 +13,19 @@
 # Per-mob variant triggers in mobs.yml can add more actions for specific mobs.
 # chance is 0.0 to 1.0, where 1.0 always runs after the trigger fires.
 # rarity-weight-modifier.per-level increases this tier's spawn chance as mob level rises.
-# display.nametag is a default nametag template for variants that do not override it.
+# display.nametag is the default nametag template for variants that do not override it.
 # stats can modify max-health, attack-damage, movement-speed, armor,
 # armor-toughness, knockback-resistance, and follow-range.
-# Stat modifiers support add, multiply, and per-level. Tier and variant stats stack.
+# Stat modifiers support:
+# - add: flat value added to the original stat.
+# - multiply: multiplier applied while scaling.
+# - per-level: additional flat value for each mob level.
+# Tier and variant stats stack, but the plugin stores original stat baselines
+# so repeated admin set/spawn operations do not compound the same scaling forever.
 # Keep particle intervals reasonable; very low values can affect server performance.
 # Supported trigger names include on_spawn, on_death, on_damage, on_shear,
 # on_tame, on_breed, on_interact, and on_aura_tick.
+# on_death only runs for player-caused death credit tracked by the plugin.
 # Per-mob variants in mobs.yml can override or extend these defaults.
 tiers:
   common:
