@@ -71,6 +71,15 @@ PlaceholderAPI exposes the same values for the player's targeted rarity mob.
 - `%mobrarity_level%`: mob level.
 - `%mobrarity_entity%`: mob type, such as `Sheep`.
 
+## Stat Scaling
+
+Tier and variant stats stack when a mob receives MobRarity data.
+
+- Supported stats: `max-health`, `attack-damage`, `movement-speed`, `armor`.
+- Also supported: `armor-toughness`, `knockback-resistance`, `follow-range`.
+- Each stat can use `add`, `multiply`, and `per-level`.
+- Changing `max-health` also heals the mob to its new maximum health.
+
 Supported triggers include `on_shear`, `on_aura_tick`, `on_damage`, `on_tame`,
 `on_breed`, `on_interact`, and player-caused `on_death`.
 

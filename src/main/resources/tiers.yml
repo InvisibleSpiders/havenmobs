@@ -13,6 +13,9 @@
 # chance is 0.0 to 1.0, where 1.0 always runs after the trigger fires.
 # rarity-weight-modifier.per-level increases this tier's spawn chance as mob level rises.
 # display.nametag is a default nametag template for variants that do not override it.
+# stats can modify max-health, attack-damage, movement-speed, armor,
+# armor-toughness, knockback-resistance, and follow-range.
+# Stat modifiers support add, multiply, and per-level. Tier and variant stats stack.
 # Keep particle intervals reasonable; very low values can affect server performance.
 # Supported trigger names include on_spawn, on_death, on_damage, on_shear,
 # on_tame, on_breed, on_interact, and on_aura_tick.
@@ -26,6 +29,12 @@ tiers:
     display-name: "<aqua>Rare</aqua>"
     rarity-weight-modifier:
       per-level: 0.03
+    stats:
+      max-health:
+        add: 4.0
+        per-level: 0.25
+      attack-damage:
+        multiply: 1.15
     display:
       nametag: "<aqua>[Lv %mobrarity_level%] %mobrarity_variant%</aqua>"
     visuals:
